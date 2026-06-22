@@ -18,22 +18,22 @@ const Hero = () => {
         <>
             <div className="w-full pb-10">
                 {/* Navbar */}
-                <nav className="z-50 flex items-center justify-between w-full py-4 px-6 md:px-16 lg:px-24 xl:px-40 text-sm">
+                <nav className="z-50 flex items-center justify-between w-full py-4 px-6 md:px-16 lg:px-24 xl:px-40 text-base">
                     <Link to="/">
                         <img src={logo} alt="logo" className="h-11 w-auto" />
                     </Link>
 
-                    <div className="hidden md:flex items-center gap-8 transition duration-500 text-slate-800">
+                    <div className="hidden md:flex items-center gap-9 transition duration-500 font-medium text-slate-800">
                         <a href="#" className="hover:text-green-600 transition">Home</a>
                         <a href="#features" className="hover:text-green-600 transition">Features</a>
                         <a href="#testimonials" className="hover:text-green-600 transition">Testimonials</a>
                         <a href="#cta" className="hover:text-green-600 transition">Contact</a>
                     </div>
-                    <div className="flex gap-2">
-                        <Link to="/app?state=register" className="hidden md:block px-6 py-2 bg-green-500 hover:bg-green-700 active:scale-95 transition-all rounded-full text-white">
+                    <div className="flex gap-4">
+                        <Link to="/app?state=register" className="hidden md:block px-7 py-2.5 bg-green-500 hover:bg-green-700 active:scale-95 transition-all rounded-full text-white font-medium">
                             Get started
                         </Link>
-                        <Link to="/app?state=login" className="hidden md:block px-6 py-2 border active:scale-95 hover:bg-slate-50 transition-all rounded-full text-slate-700 hover:text-slate-900" >
+                        <Link to="/app?state=login" className="hidden md:block px-7 py-2.5 border border-slate-200 active:scale-95 hover:bg-slate-50 transition-all rounded-full text-slate-700 hover:text-slate-900 font-medium" >
                             Login
                         </Link>
                     </div>
@@ -90,18 +90,18 @@ const Hero = () => {
                     <p className="max-w-xl text-center text-base my-7 text-slate-600">Create, refine and download polished resumes with a guided workflow built to keep your content clean, modern and job-ready.</p>
 
                     {/* CTA Buttons */}
-                    <div className="flex items-center gap-4 ">
-                        <Link to="/app" className="bg-slate-950 hover:bg-emerald-700 text-white rounded-full px-9 h-12 m-1 ring-offset-2 ring-1 ring-emerald-300 flex items-center transition-colors shadow-lg shadow-emerald-950/10">
+                    <div className="flex items-center gap-5 ">
+                        <Link to="/app" className="bg-slate-950 hover:bg-emerald-700 text-white rounded-full px-10 h-14 m-1 ring-offset-2 ring-1 ring-emerald-300 flex items-center transition-colors shadow-lg shadow-emerald-950/10 text-lg font-medium">
                             Get started
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-right ml-1 size-4" aria-hidden="true"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-right ml-2 size-5" aria-hidden="true"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
                         </Link>
-                        <button className="flex items-center gap-2 border border-slate-300 hover:bg-white transition rounded-full px-7 h-12 text-slate-700 shadow-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-video size-5" aria-hidden="true"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"></path><rect x="2" y="6" width="14" height="12" rx="2"></rect></svg>
+                        <button className="flex items-center gap-3 border border-slate-300 hover:bg-white transition rounded-full px-8 h-14 text-slate-800 shadow-sm text-lg font-medium">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-video size-6" aria-hidden="true"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"></path><rect x="2" y="6" width="14" height="12" rx="2"></rect></svg>
                             <span>Try demo</span>
                         </button>
                     </div>
 
-                    <p className="py-2 text-slate-600 mt-8 md:mt-14 uppercase tracking-widest text-xs font-medium">Trusted by modern teams and independent professionals</p>
+                    <p className="py-2 text-slate-600 mt-8 md:mt-14 uppercase tracking-widest text-sm font-medium">Trusted by modern teams and independent professionals</p>
 
                     <div className="flex flex-wrap justify-between max-sm:justify-center gap-6 max-w-3xl w-full mx-auto py-4" id="logo-container">
                         {companiesLogo.map((company, index) => (
