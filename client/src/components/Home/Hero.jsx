@@ -1,5 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import logo from '../../assets/logo.svg'
 
 const Hero = () => {
 
@@ -15,12 +16,12 @@ const Hero = () => {
 
   return (
         <>
-            <div className="min-h-screen pb-20">
+            <div className="w-full pb-10">
                 {/* Navbar */}
                 <nav className="z-50 flex items-center justify-between w-full py-4 px-6 md:px-16 lg:px-24 xl:px-40 text-sm">
-                    <a href="https://prebuiltui.com">
-                        <img src = "/client/src/assets\/ogo.svg" alt ="logo" className="h-11 w-auto" />
-                    </a>
+                    <Link to="/">
+                        <img src={logo} alt="logo" className="h-11 w-auto" />
+                    </Link>
 
                     <div className="hidden md:flex items-center gap-8 transition duration-500 text-slate-800">
                         <a href="#" className="hover:text-green-600 transition">Home</a>
@@ -56,11 +57,11 @@ const Hero = () => {
                 </div>
 
                 {/* Hero Section */}
-                <div className="relative flex flex-col items-center justify-center text-sm px-4 md:px-16 lg:px-24 xl:px-40 text-slate-950">
+                <div className="relative flex flex-col items-center justify-center text-sm px-4 md:px-16 lg:px-24 xl:px-40 text-slate-950 pt-12 md:pt-20">
                     <div className="absolute top-28 xl:top-10 -z-10 left-1/4 size-72 sm:size-96 xl:size-120 2xl:size-132 bg-emerald-300 blur-[100px] opacity-30"></div>
 
                     {/* Avatars + Stars */}
-                    <div className="flex items-center mt-24">
+                    <div className="flex items-center mt-8 md:mt-16">
                         <div className="flex -space-x-3 pr-3">
                             <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=200" alt="user3" className="size-8 object-cover rounded-full border-2 border-white hover:-translate-y-0.5 transition" style={{ zIndex: 1 }} />
                             <img src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=200" alt="user1" className="size-8 object-cover rounded-full border-2 border-white hover:-translate-y-0.5 transition" style={{ zIndex: 2 }} />
@@ -100,7 +101,7 @@ const Hero = () => {
                         </button>
                     </div>
 
-                    <p className="py-6 text-slate-600 mt-14">Trusted by modern teams and independent professionals</p>
+                    <p className="py-2 text-slate-600 mt-8 md:mt-14 uppercase tracking-widest text-xs font-medium">Trusted by modern teams and independent professionals</p>
 
                     <div className="flex flex-wrap justify-between max-sm:justify-center gap-6 max-w-3xl w-full mx-auto py-4" id="logo-container">
                         {companiesLogo.map((company, index) => (
@@ -111,15 +112,6 @@ const Hero = () => {
                     </div>
                 </div>
             </div>
-            <style>
-                {`
-                    @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
-
-                    * {
-                        font-family: 'Poppins', sans-serif;
-                    }
-                `}
-            </style>
         </>
     );
 }
