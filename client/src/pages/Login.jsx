@@ -9,7 +9,7 @@ export default function Login() {
   const isLogin = searchParams.get("state") !== "SignUp";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-linear-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center px-4">
 
       {/* Background Blur */}
       <div className="absolute top-20 left-20 w-72 h-72 bg-green-200/40 rounded-full blur-3xl"></div>
