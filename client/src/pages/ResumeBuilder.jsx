@@ -7,6 +7,7 @@ import PersonInfo from '../components/PersonInfo';
 import ResumePreview from '../components/ResumePreview';
 import TemplateSelector from '../components/TemplateSelector';
 import { DEFAULT_LAYOUT_SETTINGS } from '../components/templates/templateUtils';
+import ColorPicker from '../components/ColorPicker';
 
 const ResumeBuilder = () => {
   const {resumeId} = useParams();
@@ -94,6 +95,7 @@ const ResumeBuilder = () => {
               <div className='flex justify-between items-center mb-6 border-b border-emerald-100 py-3'>
                 <div className ='flex items-center gap-2'> 
                   <TemplateSelector selectedTemplate = {resumeData.template} onChange = {(template) => setResumeData(prev => ({...prev, template}))}/>
+                  <ColorPicker selectedColor={resumeData.accentColor} onChange = {(color) => setResumeData(prev => ({...prev, accentColor: color}))} />
                 </div>
                 <div className='flex items-center gap-2'>
                   {activeSectionIndex != 0 && (
@@ -104,7 +106,6 @@ const ResumeBuilder = () => {
                   <button type="button" onClick = {() => setActiveSectionIndex((prevIndex) => Math.min(prevIndex + 1, sections.length - 1))} className={`flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-medium transition-all ${activeSectionIndex === sections.length - 1 ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'text-slate-600 hover:bg-emerald-50 hover:text-emerald-700'}`} disabled = {activeSectionIndex === sections.length - 1} >
                       <ChevronRight className ="size-4" /> Next
                     </button>
-
                 </div>
               </div>
 
