@@ -1,15 +1,14 @@
-import { Plus, Sparkles, X } from 'lucide-react';
-import React from 'react'
-import { useState } from 'react';
+import { Plus, Sparkles, X } from 'lucide-react'
+import React, { useState } from 'react'
 
-const SkillForm = ({data, onChange}) => {
-    
-    const [newSkill, setNewSkill] = useState("");
+const SkillForm = ({ data, onChange }) => {
+    const [newSkill, setNewSkill] = useState('')
 
     const addSkill = () => {
-        if (newSkill.trim() !== "" && !data.includes(newSkill.trim())) {
-            onChange([...data, newSkill.trim()]);
-            setNewSkill("");
+        const skillValue = newSkill.trim()
+        if (skillValue && !data.includes(skillValue)) {
+            onChange([...data, skillValue])
+            setNewSkill('')
         }
     }
 
@@ -17,50 +16,65 @@ const SkillForm = ({data, onChange}) => {
         onChange(data.filter((_, index) => index !== indexToRemove))
     }
 
-    const handleKeyPress = (e)=> {
-        if(e.key === "Enter"){
-            e.preventDefault();
-            addSkill();
+    const handleKeyDown = (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault()
+            addSkill()
         }
     }
-  return (
-    <div className='space-y-4'>
-        <div>
-            <h3 className = 'flex items-center gap-2 text-lg font-semibold' text-gray-900>Skills</h3>
-            <p className = 'text-sm text-gray-500'>Add your technical and soft skills</p>
-        </div>
 
-        <div className = 'flex gap-2'>
-            <input type= "text" placeholder = "Add a skill" value = {newSkill} onChange = {(e)=>setNewSkill(e.target.value)} onKeyDown={handleKeyPress} className = 'px-3 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent w-full'/>
-
-            <button type="button" onClick={addSkill} disabled = {newSkill.trim}className="bg-emerald-500 text-white p-2 rounded-lg hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
-                <Plus className = "size-4" /> Add
-            </button>
-        </div>
-
-        {data.length > 0 ? (
-            <div className = 'flex flex-wrap gap-2'>
-                {data.map((skill,index) => (
-                    <span key = {index} className = 'flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm'>
-                        {skill}
-                        <button onClick = {()=>removeSkill(index)} className = "ml-1 hover:bg-blue-200 rounded-full p-0.5 transition-colors">
-                            <X className = "w-3 h-3" />
-                        </button>
-                    </span>
-                ))}
+    return (
+        <div className="space-y-4">
+            <div>
+                <h3 className="text-lg font-semibold text-slate-900">Skills</h3>
+                <p className="text-sm text-slate-500">Add simple comma-ready skills that can be grouped in the resume.</p>
             </div>
-        ):(
-            <div className = 'text-center py-6 text-gray-500'>
-                <Sparkles className = "w-12 h-12 text-gray-400 mx-auto" />
-                <p className = "mt-2">No skills added yet</p>
-                <p className = "text-sm">Add your technical and soft skills above.</p>
+
+            <div className="flex gap-2">
+                <input
+                    type="text"
+                    placeholder="Add a skill"
+                    value={newSkill}
+                    onChange={(event) => setNewSkill(event.target.value)}
+                    onKeyDown={handleKeyDown}
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
+                />
+
+                <button
+                    type="button"
+                    onClick={addSkill}
+                    disabled={!newSkill.trim()}
+                    className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                    <Plus className="size-4" />
+                    Add
+                </button>
             </div>
-        )} 
-        <div className = 'bg-blue-50 '>
-            <p className = 'text-sm text-blue-800'><strong>Tip:</strong> Add 8-12 relevant skills, Include both technical skills (programming languages, tools) and soft skills(leadership, communication)</p>
+
+            {data.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                    {data.map((skill, index) => (
+                        <span key={index} className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm text-emerald-800">
+                            {skill}
+                            <button type="button" onClick={() => removeSkill(index)} className="ml-1 rounded-full p-0.5 transition-colors hover:bg-emerald-100">
+                                <X className="size-3" />
+                            </button>
+                        </span>
+                    ))}
+                </div>
+            ) : (
+                <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 py-8 text-center text-slate-500">
+                    <Sparkles className="mx-auto size-12 text-slate-300" />
+                    <p className="mt-2 font-medium text-slate-700">No skills added yet</p>
+                    <p className="text-sm">Add technical and domain skills you want grouped in the resume.</p>
+                </div>
+            )}
+
+            <div className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                <strong>Tip:</strong> Add 8-12 relevant skills across languages, frameworks, and tools.
+            </div>
         </div>
-    </div>
-  )
+    )
 }
 
 export default SkillForm

@@ -24,22 +24,64 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   const loadAllResumes = () => {
-    setAllResumes(dummyResumeData)
+    // Start with all dummy resumes mapped by ID
+    const resumesMap = {}
+    dummyResumeData.forEach(resume => {
+      resumesMap[resume._id] = { ...resume }
+    })
+
+    // Scan localStorage for drafts
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (key && key.startsWith('resume-builder:draft:')) {
+        const id = key.substring('resume-builder:draft:'.length)
+        try {
+          const stored = JSON.parse(localStorage.getItem(key))
+          if (stored) {
+            resumesMap[id] = {
+              ...resumesMap[id],
+              ...stored,
+              _id: id,
+              updatedAt: stored.updatedAt || new Date().toISOString(),
+              createdAt: stored.createdAt || new Date().toISOString(),
+            }
+          }
+        } catch (e) {
+          console.error("Error parsing stored resume", e)
+        }
+      }
+    }
+
+    // Convert map to array and sort by updatedAt desc
+    const mergedList = Object.values(resumesMap).sort((a, b) => {
+      return new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0)
+    })
+
+    setAllResumes(mergedList)
   }
 
   const deleteResume = (id) => {
-    // For now, filter local state to simulate deletion
     const confirmDelete = window.confirm("Are you sure you want to delete this resume? This action cannot be undone.");
     if(confirmDelete) {
+      localStorage.removeItem(`resume-builder:draft:${id}`)
       setAllResumes(prev => prev.filter(resume => resume._id !== id))
     }
   }
 
   const updateResumeTitle = (e) => {
     e.preventDefault()
-    setAllResumes(prev => prev.map(resume => 
-      resume._id === editResumeId ? { ...resume, title: title, updatedAt: new Date().toISOString() } : resume
-    ))
+    const resumeToEdit = allResumes.find(r => r._id === editResumeId)
+    if (resumeToEdit) {
+      const updatedResume = {
+        ...resumeToEdit,
+        title: title,
+        updatedAt: new Date().toISOString()
+      }
+      localStorage.setItem(`resume-builder:draft:${editResumeId}`, JSON.stringify(updatedResume))
+      setAllResumes(prev => prev.map(resume => 
+        resume._id === editResumeId ? updatedResume : resume
+      ))
+    }
     setShowEditTitle(false)
     setEditResumeId("")
     setTitle("")
@@ -55,14 +97,60 @@ const Dashboard = () => {
   const createResume = async(event)=>{
     event.preventDefault();
     setShowCreateResume(false);
-    navigate(`/app/builder/resume123`)
-
+    
+    const newId = 'resume-' + Math.random().toString(36).substring(2, 11)
+    const newResume = {
+      _id: newId,
+      title: title || "Untitled Resume",
+      personal_info: {},
+      professional_summary: '',
+      experience: [],
+      project: [],
+      education: [],
+      skills: [],
+      certifications: [],
+      achievements: [],
+      extracurricular_activities: [],
+      template: 'classic',
+      accentColor: '#10b981',
+      public: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }
+    
+    localStorage.setItem(`resume-builder:draft:${newId}`, JSON.stringify(newResume))
+    setTitle("")
+    navigate(`/app/builder/${newId}`)
   }
 
   const uploadResume = async(event)=>{
     event.preventDefault();
     setShowUploadResume(false);
-    navigate(`/app/builder/resume123`)
+    
+    const newId = 'resume-' + Math.random().toString(36).substring(2, 11)
+    const newResume = {
+      _id: newId,
+      title: title || (resumeFile ? resumeFile.name.replace(/\.pdf$/i, '') : "Imported Resume"),
+      personal_info: {},
+      professional_summary: '',
+      experience: [],
+      project: [],
+      education: [],
+      skills: [],
+      certifications: [],
+      achievements: [],
+      extracurricular_activities: [],
+      template: 'classic',
+      accentColor: '#10b981',
+      public: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }
+    
+    localStorage.setItem(`resume-builder:draft:${newId}`, JSON.stringify(newResume))
+    setTitle("")
+    setResumeFile(null)
+    navigate(`/app/builder/${newId}`)
   }
   useEffect(() => {
     loadAllResumes()

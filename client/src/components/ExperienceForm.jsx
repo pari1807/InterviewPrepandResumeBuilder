@@ -1,98 +1,31 @@
-import { Briefcase, Plus, Trash2 } from 'lucide-react'
 import React from 'react'
+import SectionListEditor from './SectionListEditor'
 
-const ExperienceForm = () => {
-
-    const addExperience = () => {
-        const newExperience = {
-            company : "",
-            position: "",
-            start_date: "",
-            end_date : "",
-            description: "",
-            is_current: false
-        };
-
-        onchange([...data, newExperience])
-    }
-
-    const removeExperience = (index) => {
-        const updated = data.filter((_, i) => i !== index);
-        onchange(updated)
-    }
-
-    const updateExperience = (index,field,value) => {
-        const updated = [...data];
-        updated[index] = {...updated[index], [field]: value}
-        onchange(updated)
-    }
-  return (
-    <div className = 'space-y-6'>
-        <div className = 'flex items-center justify-between'>
-            <div>
-                <h3 className = 'flex items-center gap-2 text-lg font-semibold tex-gray-900'>
-                    Professional Experience
-                </h3>
-                <p className = 'text-sm text-gray-500'>
-                    Add your Job Experience
-                </p>
-            </div>
-
-            <button onClick = {addExperience} className = 'flex items-center gap-2 px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors '>
-                <Plus className ='size-4' />
-                Add Experience
-            </button>
-        </div>
-
-        {data.length === 0 ? (
-            <div className = 'text-center py-8 text-gray-500'>
-                <Briefcase className = "w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p>No work experience added yet.</p>
-                <p className = "text-sm">Click "Add Experience" to get started.</p>
-            </div>
-        ):(
-            <div className  = 'space-y-4'>
-                {data.map((experience, index) => (
-                    <div key = {index} className = "p-4 border border-gray-200 rounded-lg space-y-3">
-                        <div className = 'flex justify-between items-start'>
-                            <h4>Experience #{index + 1}</h4>
-                            <button onClick = {()=>removeExperience(index)} className = 'text-red-500 hover:text-red-700 transition-colors' >
-                                <Trash2 className='size-4'/>
-                            </button>
-                        </div>
-
-                        <div className = 'grid md:grid-cols-2 gap-3'>
-                            <input value = {experience.company || ""} type = "text"  onChange = {(e)=>updateExperience(index, "company", e.target.value)} placeholder= "Company Name" className = "px-3 py-2 text-sm rounded-lg"/>
-
-                             <input value = {experience.position || ""} type = "text"  onChange = {(e)=>updateExperience(index, "position", e.target.value)} placeholder= "Job Title" className = "px-3 py-2 text-sm rounded-lg"/>
-
-                             <input value = {experience.start_date || ""} type = "month"  onChange = {(e)=>updateExperience(index, "start_date", e.target.value)} className = "px-3 py-2 text-sm rounded-lg"/>
-
-                             <input value = {experience.end_date || ""} type = "month"  onChange = {(e)=>updateExperience(index, "end_date", e.target.value)} className = "px-3 py-2 text-sm rounded-lg" disabled = {experience.is_current} className = "px-3 py-2 text-sm rounded-lg disabled:bg-gray-100"/>
-                        </div>
-
-                        <label className ="flex items-center gap-2">
-                            <input type = "checkbox" checked  = {experience.is_current || false} onChange={(e)=>{updateExperience(index,"is_current",e.target.checked ? true: false); }} className = 'rounded border-gray-300 text-blue-600 focus:ring-blue-500' />
-                            <span className = 'text-sm text-gray-700'>Currently Working here</span>
-                        </label>
-
-                        <div className ="space-y-2">
-                            <div className = 'flex items-center justify-between'>
-                                <label className = 'text-sm font-medium'>Job Description</label>
-                                <button className = 'flex items-center gap-1 px-2 py-1 text-xs bg-purple-100 text-purple-70 rounded hover:bg-purple-200 transition-colors disabled:opacity-50'>
-                                    <Sparkles className = 'w-3 h-3'/>
-                                    Enhance with AI
-                                </button>
-                            </div>
-
-                            <textarea  value  = {experience.description || ""} onChange = {(e)=> updateExperience(index, "description", e.target.value)} rows = {4} className = "w-full text-sm px-3 py-2 rounded-lg resize-none" placeholder="Describe your responsibilities and achievements..."/>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        )}
-    </div>
-  )
+const ExperienceForm = ({ data, onChange }) => {
+    return (
+        <SectionListEditor
+            title="Professional Experience"
+            description="Use concise bullet-ready descriptions and keep each role compact."
+            data={data}
+            onChange={onChange}
+            itemLabel="Experience"
+            addLabel="Add Experience"
+            emptyTitle="No work experience added yet"
+            emptyDescription="Add your most relevant roles first."
+            createItem={() => ({ company: '', position: '', location: '', employment_type: '', start_date: '', end_date: '', is_current: false, description: '' })}
+            getItemSummary={(item) => [item.position, item.company].filter(Boolean).join(' • ')}
+            fields={[
+                { key: 'position', label: 'Role', placeholder: 'Senior Software Engineer', fullWidth: true },
+                { key: 'company', label: 'Company', placeholder: 'Example Corp' },
+                { key: 'location', label: 'Location', placeholder: 'New York, NY' },
+                { key: 'employment_type', label: 'Employment Type', placeholder: 'Full-time' },
+                { key: 'start_date', label: 'Start Date', type: 'month', placeholder: '2023-01' },
+                { key: 'end_date', label: 'End Date', type: 'month', placeholder: '2025-01' },
+                { key: 'is_current', label: 'Currently working here', type: 'checkbox' },
+                { key: 'description', label: 'Description', type: 'textarea', rows: 4, placeholder: 'Write compact bullet-ready achievements and responsibilities.', fullWidth: true },
+            ]}
+        />
+    )
 }
 
 export default ExperienceForm

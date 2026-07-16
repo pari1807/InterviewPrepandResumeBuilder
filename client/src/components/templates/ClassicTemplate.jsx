@@ -1,15 +1,21 @@
 import { Mail, Phone, MapPin, Globe } from "lucide-react";
-import {FaLinkedin} from "react-icons/fa"
+import { FaLinkedin } from "react-icons/fa"
+import React from 'react'
+import {
+    formatDate,
+    formatRange,
+    getProjectEntries,
+    getCertificationEntries,
+    getAchievementEntries,
+    getActivityEntries,
+    toBulletList
+} from './templateUtils'
 
 const ClassicTemplate = ({ data, accentColor }) => {
-    const formatDate = (dateStr) => {
-        if (!dateStr) return "";
-        const [year, month] = dateStr.split("-");
-        return new Date(year, month - 1).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "short"
-        });
-    };
+    const projects = getProjectEntries(data)
+    const certifications = getCertificationEntries(data)
+    const achievements = getAchievementEntries(data)
+    const activities = getActivityEntries(data)
 
     return (
         <div className="max-w-4xl mx-auto p-8 bg-white text-gray-800 leading-relaxed">
@@ -79,11 +85,11 @@ const ClassicTemplate = ({ data, accentColor }) => {
                                         <p className="text-gray-700 font-medium">{exp.company}</p>
                                     </div>
                                     <div className="text-right text-sm text-gray-600">
-                                        <p>{formatDate(exp.start_date)} - {exp.is_current ? "Present" : formatDate(exp.end_date)}</p>
+                                        <p>{formatRange(exp.start_date, exp.end_date, exp.is_current || /^(present|current)$/i.test(String(exp.end_date || '')))}</p>
                                     </div>
                                 </div>
                                 {exp.description && (
-                                    <div className="text-gray-700 leading-relaxed whitespace-pre-line">
+                                    <div className="text-gray-700 leading-relaxed whitespace-pre-line break-words mt-2">
                                         {exp.description}
                                     </div>
                                 )}
@@ -94,22 +100,40 @@ const ClassicTemplate = ({ data, accentColor }) => {
             )}
 
             {/* Projects */}
-            {data.project && data.project.length > 0 && (
+            {projects && projects.length > 0 && (
                 <section className="mb-6">
                     <h2 className="text-xl font-semibold mb-4" style={{ color: accentColor }}>
                         PROJECTS
                     </h2>
 
-                    <ul className="space-y-3 ">
-                        {data.project.map((proj, index) => (
-                            <div key={index} className="flex justify-between items-start border-l-3 border-gray-300 pl-6">
-                                <div>
-                                    <li className="font-semibold text-gray-800 ">{proj.name}</li>
-                                    <p className="text-gray-600">{proj.description}</p>
+                    <div className="space-y-4">
+                        {projects.map((proj, index) => (
+                            <div key={index} className="border-l-3 pl-4" style={{ borderColor: accentColor }}>
+                                <div className="flex justify-between items-start mb-2">
+                                    <div>
+                                        <h3 className="font-semibold text-gray-900">{proj.name}</h3>
+                                        {proj.tech_stack && (
+                                            <p className="text-sm font-medium text-gray-650">Tech Stack: {proj.tech_stack}</p>
+                                        )}
+                                    </div>
+                                    <div className="text-right text-sm text-gray-600">
+                                        <p>{formatRange(proj.start_date, proj.end_date, false)}</p>
+                                    </div>
                                 </div>
+                                {proj.description && (
+                                    <div className="text-gray-700 leading-relaxed whitespace-pre-line break-words mt-2 mb-1">
+                                        {proj.description}
+                                    </div>
+                                )}
+                                {(proj.github_url || proj.live_url) && (
+                                    <div className="flex gap-3 text-xs mt-1">
+                                        {proj.github_url && <a href={proj.github_url} target="_blank" rel="noreferrer" className="underline hover:text-gray-900" style={{ color: accentColor }}>GitHub</a>}
+                                        {proj.live_url && <a href={proj.live_url} target="_blank" rel="noreferrer" className="underline hover:text-gray-900" style={{ color: accentColor }}>Live Demo</a>}
+                                    </div>
+                                )}
                             </div>
                         ))}
-                    </ul>
+                    </div>
                 </section>
             )}
 
@@ -152,6 +176,92 @@ const ClassicTemplate = ({ data, accentColor }) => {
                                 • {skill}
                             </div>
                         ))}
+                    </div>
+                </section>
+            )}
+
+            {/* Certifications */}
+            {certifications && certifications.length > 0 && (
+                <section className="mb-6">
+                    <h2 className="text-xl font-semibold mb-4" style={{ color: accentColor }}>
+                        CERTIFICATIONS
+                    </h2>
+                    <div className="space-y-3">
+                        {certifications.map((cert, index) => {
+                            const certName = cert.certificate_name || cert.name || cert.title || cert.description;
+                            return (
+                                <div key={index} className="flex justify-between items-start">
+                                    <div>
+                                        <h3 className="font-semibold text-gray-900">{certName}</h3>
+                                        <p className="text-gray-700">{cert.issuer}</p>
+                                    </div>
+                                    <div className="text-right text-sm text-gray-600">
+                                        <p>{formatDate(cert.issue_date || cert.date)}</p>
+                                        {cert.credential_url && (
+                                            <a href={cert.credential_url} target="_blank" rel="noreferrer" className="text-xs underline hover:text-gray-900" style={{ color: accentColor }}>View Credential</a>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </section>
+            )}
+
+            {/* Achievements */}
+            {achievements && achievements.length > 0 && (
+                <section className="mb-6">
+                    <h2 className="text-xl font-semibold mb-4" style={{ color: accentColor }}>
+                        ACHIEVEMENTS
+                    </h2>
+                    <div className="space-y-3">
+                        {achievements.map((ach, index) => {
+                            const title = ach.title || ach.name;
+                            return (
+                                <div key={index} className="flex justify-between items-start">
+                                    <div>
+                                        <h3 className="font-semibold text-gray-900">{title}</h3>
+                                        {ach.organization && <p className="text-gray-700">{ach.organization}</p>}
+                                        {ach.description && <p className="text-sm text-gray-600 mt-1">{ach.description}</p>}
+                                    </div>
+                                    <div className="text-right text-sm text-gray-600">
+                                        <p>{formatDate(ach.date)}</p>
+                                        {ach.proof_url && (
+                                            <a href={ach.proof_url} target="_blank" rel="noreferrer" className="text-xs underline hover:text-gray-900" style={{ color: accentColor }}>View Proof</a>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </section>
+            )}
+
+            {/* Extracurricular Activities */}
+            {activities && activities.length > 0 && (
+                <section className="mb-6">
+                    <h2 className="text-xl font-semibold mb-4" style={{ color: accentColor }}>
+                        EXTRACURRICULAR ACTIVITIES
+                    </h2>
+                    <div className="space-y-3">
+                        {activities.map((act, index) => {
+                            const activityName = act.activity || act.name || act.title;
+                            return (
+                                <div key={index} className="flex justify-between items-start">
+                                    <div>
+                                        <h3 className="font-semibold text-gray-900">{activityName}</h3>
+                                        <p className="text-gray-700">{[act.position, act.organization].filter(Boolean).join(' at ')}</p>
+                                        {act.description && <p className="text-sm text-gray-650 mt-1">{act.description}</p>}
+                                    </div>
+                                    <div className="text-right text-sm text-gray-600">
+                                        <p>{formatRange(act.start_date, act.end_date, false)}</p>
+                                        {act.url && (
+                                            <a href={act.url} target="_blank" rel="noreferrer" className="text-xs underline hover:text-gray-900" style={{ color: accentColor }}>Link</a>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 </section>
             )}

@@ -1,7 +1,7 @@
 import { Globe, Mail, MapPin, Phone } from 'lucide-react'
 import { FaLinkedin } from 'react-icons/fa'
 import React from 'react'
-import { formatDate, toBulletList } from './templateUtils'
+import { formatDate, toBulletList, formatRange } from './templateUtils'
 
 const ExecutiveTemplate = ({ data, accentColor = '#10b981' }) => {
     const personalInfo = data?.personal_info || {}
@@ -47,15 +47,13 @@ const ExecutiveTemplate = ({ data, accentColor = '#10b981' }) => {
                                                 <p className="font-medium" style={{ color: accentColor }}>{exp.company}</p>
                                             </div>
                                             <p className="text-sm text-slate-500">
-                                                {formatDate(exp.start_date)} - {exp.is_current ? 'Present' : formatDate(exp.end_date)}
+                                                {formatRange(exp.start_date, exp.end_date, exp.is_current || /^(present|current)$/i.test(String(exp.end_date || '')))}
                                             </p>
                                         </div>
                                         {exp.description && (
-                                            <ul className="mt-3 list-disc space-y-1 pl-5 leading-relaxed text-slate-700">
-                                                {toBulletList(exp.description).map((line, lineIndex) => (
-                                                    <li key={lineIndex}>{line}</li>
-                                                ))}
-                                            </ul>
+                                            <div className="mt-3 text-sm leading-relaxed text-slate-700 whitespace-pre-line break-words">
+                                                {exp.description}
+                                            </div>
                                         )}
                                     </div>
                                 ))}
@@ -69,14 +67,29 @@ const ExecutiveTemplate = ({ data, accentColor = '#10b981' }) => {
                             <div className="space-y-4">
                                 {projects.map((project, index) => (
                                     <div key={index} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-                                        <h3 className="font-semibold text-slate-900">{project.name}</h3>
-                                        {project.type && <p className="mt-1 text-sm font-medium text-slate-500">{project.type}</p>}
+                                        <div className="flex flex-col gap-1 md:flex-row md:items-start md:justify-between">
+                                            <div>
+                                                <h3 className="font-semibold text-slate-900">{project.name}</h3>
+                                                {(project.tech_stack || project.type) && (
+                                                    <p className="mt-1 text-sm font-medium text-emerald-700" style={{ color: accentColor }}>
+                                                        {project.tech_stack || project.type}
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <p className="text-sm text-slate-500">
+                                                {formatRange(project.start_date, project.end_date, false)}
+                                            </p>
+                                        </div>
                                         {project.description && (
-                                            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-relaxed text-slate-700">
-                                                {toBulletList(project.description).map((line, lineIndex) => (
-                                                    <li key={lineIndex}>{line}</li>
-                                                ))}
-                                            </ul>
+                                            <div className="mt-2 text-sm leading-relaxed text-slate-700 whitespace-pre-line break-words">
+                                                {project.description}
+                                            </div>
+                                        )}
+                                        {(project.github_url || project.live_url) && (
+                                            <div className="flex gap-3 text-xs mt-2">
+                                                {project.github_url && <a href={project.github_url} target="_blank" rel="noreferrer" className="underline hover:text-slate-950" style={{ color: accentColor }}>GitHub</a>}
+                                                {project.live_url && <a href={project.live_url} target="_blank" rel="noreferrer" className="underline hover:text-slate-950" style={{ color: accentColor }}>Live Demo</a>}
+                                            </div>
                                         )}
                                     </div>
                                 ))}
@@ -133,33 +146,87 @@ const ExecutiveTemplate = ({ data, accentColor = '#10b981' }) => {
                     {certificates.length > 0 && (
                         <section>
                             <h2 className="mb-4 text-sm font-semibold uppercase tracking-[0.24em]" style={{ color: accentColor }}>Certificates</h2>
-                            <ul className="space-y-2 pl-5 text-sm leading-relaxed text-slate-700 list-disc">
-                                {certificates.map((certificate, index) => (
-                                    <li key={index}>{typeof certificate === 'string' ? certificate : certificate.name || certificate.title || certificate.description}</li>
-                                ))}
-                            </ul>
+                            <div className="space-y-4">
+                                {certificates.map((cert, index) => {
+                                    const certName = typeof cert === 'string' ? cert : cert.certificate_name || cert.name || cert.title || cert.description;
+                                    const issuer = typeof cert === 'string' ? '' : cert.issuer;
+                                    const date = typeof cert === 'string' ? '' : formatDate(cert.issue_date || cert.date);
+                                    const link = typeof cert === 'string' ? '' : cert.credential_url || cert.url;
+                                    return (
+                                        <div key={index} className="rounded-2xl border border-slate-200 bg-white p-4">
+                                            <h3 className="font-semibold text-slate-900">{certName}</h3>
+                                            {issuer && <p className="mt-1 text-sm text-slate-600">{issuer}</p>}
+                                            <div className="mt-2 flex items-center justify-between text-sm text-slate-500">
+                                                <span>{date}</span>
+                                                {link && (
+                                                    <a href={link} target="_blank" rel="noreferrer" className="underline font-medium text-xs" style={{ color: accentColor }}>View Credential</a>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </section>
                     )}
 
                     {achievements.length > 0 && (
                         <section>
                             <h2 className="mb-4 text-sm font-semibold uppercase tracking-[0.24em]" style={{ color: accentColor }}>Achievements</h2>
-                            <ul className="space-y-2 pl-5 text-sm leading-relaxed text-slate-700 list-disc">
-                                {achievements.map((achievement, index) => (
-                                    <li key={index}>{typeof achievement === 'string' ? achievement : achievement.name || achievement.title || achievement.description}</li>
-                                ))}
-                            </ul>
+                            <div className="space-y-4">
+                                {achievements.map((ach, index) => {
+                                    const title = typeof ach === 'string' ? ach : ach.title || ach.name;
+                                    const org = typeof ach === 'string' ? '' : ach.organization;
+                                    const date = typeof ach === 'string' ? '' : formatDate(ach.date);
+                                    const link = typeof ach === 'string' ? '' : ach.proof_url || ach.url;
+                                    const desc = typeof ach === 'string' ? '' : ach.description;
+                                    return (
+                                        <div key={index} className="rounded-2xl border border-slate-200 bg-white p-4">
+                                            <h3 className="font-semibold text-slate-900">{title}</h3>
+                                            {org && <p className="mt-1 text-sm text-slate-650">{org}</p>}
+                                            {desc && <p className="mt-2 text-sm text-slate-700">{desc}</p>}
+                                            {(date || link) && (
+                                                <div className="mt-2 flex items-center justify-between text-sm text-slate-500">
+                                                    <span>{date}</span>
+                                                    {link && (
+                                                        <a href={link} target="_blank" rel="noreferrer" className="underline font-medium text-xs" style={{ color: accentColor }}>View Proof</a>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </section>
                     )}
 
                     {extracurricular.length > 0 && (
                         <section>
                             <h2 className="mb-4 text-sm font-semibold uppercase tracking-[0.24em]" style={{ color: accentColor }}>Extracurricular</h2>
-                            <ul className="space-y-2 pl-5 text-sm leading-relaxed text-slate-700 list-disc">
-                                {extracurricular.map((activity, index) => (
-                                    <li key={index}>{typeof activity === 'string' ? activity : activity.name || activity.title || activity.description}</li>
-                                ))}
-                            </ul>
+                            <div className="space-y-4">
+                                {extracurricular.map((act, index) => {
+                                    const name = typeof act === 'string' ? act : act.activity || act.name || act.title;
+                                    const org = typeof act === 'string' ? '' : act.organization;
+                                    const pos = typeof act === 'string' ? '' : act.position;
+                                    const range = typeof act === 'string' ? '' : formatRange(act.start_date, act.end_date, false);
+                                    const link = typeof act === 'string' ? '' : act.url;
+                                    const desc = typeof act === 'string' ? '' : act.description;
+                                    return (
+                                        <div key={index} className="rounded-2xl border border-slate-200 bg-white p-4">
+                                            <h3 className="font-semibold text-slate-900">{name}</h3>
+                                            {(pos || org) && <p className="mt-1 text-sm text-slate-600">{[pos, org].filter(Boolean).join(' at ')}</p>}
+                                            {desc && <p className="mt-2 text-sm text-slate-700">{desc}</p>}
+                                            {(range || link) && (
+                                                <div className="mt-2 flex items-center justify-between text-sm text-slate-500">
+                                                    <span>{range}</span>
+                                                    {link && (
+                                                        <a href={link} target="_blank" rel="noreferrer" className="underline font-medium text-xs" style={{ color: accentColor }}>Link</a>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </section>
                     )}
                 </aside>

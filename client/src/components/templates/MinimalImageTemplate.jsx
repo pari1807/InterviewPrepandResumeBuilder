@@ -1,14 +1,20 @@
 import { Mail, Phone, MapPin } from "lucide-react";
+import React from 'react'
+import {
+    formatDate,
+    formatRange,
+    getProjectEntries,
+    getCertificationEntries,
+    getAchievementEntries,
+    getActivityEntries,
+    toBulletList
+} from './templateUtils'
 
 const MinimalImageTemplate = ({ data, accentColor }) => {
-    const formatDate = (dateStr) => {
-        if (!dateStr) return "";
-        const [year, month] = dateStr.split("-");
-        return new Date(year, month - 1).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "short",
-        });
-    };
+    const projects = getProjectEntries(data)
+    const certifications = getCertificationEntries(data)
+    const achievements = getAchievementEntries(data)
+    const activities = getActivityEntries(data)
 
     return (
         <div className="max-w-5xl mx-auto bg-white text-zinc-800">
@@ -92,7 +98,7 @@ const MinimalImageTemplate = ({ data, accentColor }) => {
 
                     {/* Skills */}
                     {data.skills && data.skills.length > 0 && (
-                        <section>
+                        <section className="mb-8">
                             <h2 className="text-sm font-semibold tracking-widest text-zinc-600 mb-3">
                                 SKILLS
                             </h2>
@@ -103,14 +109,40 @@ const MinimalImageTemplate = ({ data, accentColor }) => {
                             </ul>
                         </section>
                     )}
+
+                    {/* Certifications */}
+                    {certifications && certifications.length > 0 && (
+                        <section>
+                            <h2 className="text-sm font-semibold tracking-widest text-zinc-600 mb-3">
+                                CERTIFICATIONS
+                            </h2>
+                            <div className="space-y-4 text-sm">
+                                {certifications.map((cert, index) => {
+                                    const certName = cert.certificate_name || cert.name || cert.title || cert.description;
+                                    return (
+                                        <div key={index}>
+                                            <p className="font-semibold uppercase">{certName}</p>
+                                            <p className="text-zinc-600">{cert.issuer}</p>
+                                            <p className="text-xs text-zinc-500">
+                                                {formatDate(cert.issue_date || cert.date)}
+                                            </p>
+                                            {cert.credential_url && (
+                                                <a href={cert.credential_url} target="_blank" rel="noreferrer" className="text-xs underline" style={{ color: accentColor }}>View Credential</a>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </section>
+                    )}
                 </aside>
 
                 {/* Right Content */}
-                <main className="col-span-2 p-8 pt-0">
+                <main className="col-span-2 p-8 pt-0 space-y-8">
 
                     {/* Summary */}
                     {data.professional_summary && (
-                        <section className="mb-8">
+                        <section>
                             <h2 className="text-sm font-semibold tracking-widest mb-3" style={{ color: accentColor }} >
                                 SUMMARY
                             </h2>
@@ -126,7 +158,7 @@ const MinimalImageTemplate = ({ data, accentColor }) => {
                             <h2 className="text-sm font-semibold tracking-widest mb-4" style={{ color: accentColor }} >
                                 EXPERIENCE
                             </h2>
-                            <div className="space-y-6 mb-8">
+                            <div className="space-y-6">
                                 {data.experience.map((exp, index) => (
                                     <div key={index}>
                                         <div className="flex justify-between items-center">
@@ -134,19 +166,16 @@ const MinimalImageTemplate = ({ data, accentColor }) => {
                                                 {exp.position}
                                             </h3>
                                             <span className="text-xs text-zinc-500">
-                                                {formatDate(exp.start_date)} -{" "}
-                                                {exp.is_current ? "Present" : formatDate(exp.end_date)}
+                                                {formatRange(exp.start_date, exp.end_date, exp.is_current || /^(present|current)$/i.test(String(exp.end_date || '')))}
                                             </span>
                                         </div>
                                         <p className="text-sm mb-2" style={{ color: accentColor }} >
                                             {exp.company}
                                         </p>
                                         {exp.description && (
-                                            <ul className="list-disc list-inside text-sm text-zinc-700 leading-relaxed space-y-1">
-                                                {exp.description.split("\n").map((line, i) => (
-                                                    <li key={i}>{line}</li>
-                                                ))}
-                                            </ul>
+                                            <div className="text-sm text-zinc-700 leading-relaxed whitespace-pre-line break-words mt-2">
+                                                {exp.description}
+                                            </div>
                                         )}
                                     </div>
                                 ))}
@@ -155,27 +184,90 @@ const MinimalImageTemplate = ({ data, accentColor }) => {
                     )}
 
                     {/* Projects */}
-                    {data.project && data.project.length > 0 && (
+                    {projects && projects.length > 0 && (
                         <section>
-                            <h2 className="text-sm uppercase tracking-widest font-semibold" style={{ color: accentColor }}>
+                            <h2 className="text-sm uppercase tracking-widest font-semibold mb-4" style={{ color: accentColor }}>
                                 PROJECTS
                             </h2>
-                            <div className="space-y-4">
-                                {data.project.map((project, index) => (
+                            <div className="space-y-6">
+                                {projects.map((proj, index) => (
                                     <div key={index}>
-                                        <h3 className="text-md font-medium text-zinc-800 mt-3">{project.name}</h3>
-                                        <p className="text-sm mb-1" style={{ color: accentColor }} >
-                                            {project.type}
-                                        </p>
-                                        {project.description && (
-                                            <ul className="list-disc list-inside text-sm text-zinc-700  space-y-1">
-                                                {project.description.split("\n").map((line, i) => (
-                                                    <li key={i}>{line}</li>
-                                                ))}
-                                            </ul>
+                                        <div className="flex justify-between items-baseline">
+                                            <h3 className="text-md font-semibold text-zinc-805">{proj.name}</h3>
+                                            <span className="text-xs text-zinc-500">
+                                                {formatRange(proj.start_date, proj.end_date, false)}
+                                            </span>
+                                        </div>
+                                        {proj.tech_stack && (
+                                            <p className="text-xs font-medium text-zinc-500">Tech Stack: {proj.tech_stack}</p>
+                                        )}
+                                        {proj.description && (
+                                            <div className="text-sm text-zinc-700 leading-relaxed whitespace-pre-line break-words mt-2">
+                                                {proj.description}
+                                            </div>
+                                        )}
+                                        {(proj.github_url || proj.live_url) && (
+                                            <div className="flex gap-3 text-xs mt-1">
+                                                {proj.github_url && <a href={proj.github_url} target="_blank" rel="noreferrer" className="underline" style={{ color: accentColor }}>GitHub</a>}
+                                                {proj.live_url && <a href={proj.live_url} target="_blank" rel="noreferrer" className="underline" style={{ color: accentColor }}>Live Demo</a>}
+                                            </div>
                                         )}
                                     </div>
                                 ))}
+                            </div>
+                        </section>
+                    )}
+
+                    {/* Achievements */}
+                    {achievements && achievements.length > 0 && (
+                        <section>
+                            <h2 className="text-sm uppercase tracking-widest font-semibold mb-4" style={{ color: accentColor }}>
+                                ACHIEVEMENTS
+                            </h2>
+                            <div className="space-y-4">
+                                {achievements.map((ach, index) => {
+                                    const title = ach.title || ach.name;
+                                    return (
+                                        <div key={index}>
+                                            <div className="flex justify-between items-baseline">
+                                                <h3 className="text-md font-semibold text-zinc-805">{title}</h3>
+                                                <span className="text-xs text-zinc-500">{formatDate(ach.date)}</span>
+                                            </div>
+                                            {ach.organization && <p className="text-xs text-zinc-500">{ach.organization}</p>}
+                                            {ach.description && <p className="text-sm text-zinc-700 mt-1">{ach.description}</p>}
+                                            {ach.proof_url && (
+                                                <a href={ach.proof_url} target="_blank" rel="noreferrer" className="text-xs underline mt-1 block" style={{ color: accentColor }}>View Proof</a>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </section>
+                    )}
+
+                    {/* Extracurricular Activities */}
+                    {activities && activities.length > 0 && (
+                        <section>
+                            <h2 className="text-sm uppercase tracking-widest font-semibold mb-4" style={{ color: accentColor }}>
+                                ACTIVITIES
+                            </h2>
+                            <div className="space-y-4">
+                                {activities.map((act, index) => {
+                                    const activityName = act.activity || act.name || act.title;
+                                    return (
+                                        <div key={index}>
+                                            <div className="flex justify-between items-baseline">
+                                                <h3 className="text-md font-semibold text-zinc-805">{activityName}</h3>
+                                                <span className="text-xs text-zinc-500">{formatRange(act.start_date, act.end_date, false)}</span>
+                                            </div>
+                                            <p className="text-xs text-zinc-500">{[act.position, act.organization].filter(Boolean).join(' at ')}</p>
+                                            {act.description && <p className="text-sm text-zinc-700 mt-1">{act.description}</p>}
+                                            {act.url && (
+                                                <a href={act.url} target="_blank" rel="noreferrer" className="text-xs underline mt-1 block" style={{ color: accentColor }}>Link</a>
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </section>
                     )}
