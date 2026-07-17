@@ -30,10 +30,10 @@ const Hero = () => {
                         <a href="#cta" className="hover:text-green-600 transition">Contact</a>
                     </div>
                     <div className="flex gap-4">
-                        <Link to="/app?state=register" className="hidden md:block px-7 py-2.5 bg-green-500 hover:bg-green-700 active:scale-95 transition-all rounded-full text-white font-medium">
+                        <Link to="/login?state=SignUp" className="hidden md:block px-7 py-2.5 bg-green-500 hover:bg-green-700 active:scale-95 transition-all rounded-full text-white font-medium">
                             Get started
                         </Link>
-                        <Link to="/app?state=login" className="hidden md:block px-7 py-2.5 border border-slate-200 active:scale-95 hover:bg-slate-50 transition-all rounded-full text-slate-700 hover:text-slate-900 font-medium" >
+                        <Link to="/login?state=Login" className="hidden md:block px-7 py-2.5 border border-slate-200 active:scale-95 hover:bg-slate-50 transition-all rounded-full text-slate-700 hover:text-slate-900 font-medium" >
                             Login
                         </Link>
                     </div>
@@ -91,11 +91,11 @@ const Hero = () => {
 
                     {/* CTA Buttons */}
                     <div className="flex items-center gap-5 ">
-                        <Link to="/app" className="bg-slate-950 hover:bg-emerald-700 text-white rounded-full px-10 h-14 m-1 ring-offset-2 ring-1 ring-emerald-300 flex items-center transition-colors shadow-lg shadow-emerald-950/10 text-lg font-medium">
+                        <Link to="/login?state=SignUp" className="bg-slate-950 hover:bg-emerald-700 text-white rounded-full px-10 h-14 m-1 ring-offset-2 ring-1 ring-emerald-300 flex items-center transition-colors shadow-lg shadow-emerald-950/10 text-lg font-medium">
                             Get started
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-right ml-2 size-5" aria-hidden="true"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
                         </Link>
-                        <Link to="/app" className="flex items-center gap-3 border border-slate-300 hover:bg-white transition rounded-full px-8 h-14 text-slate-800 shadow-sm text-lg font-medium">
+                        <Link to="/login?state=SignUp" className="flex items-center gap-3 border border-slate-300 hover:bg-white transition rounded-full px-8 h-14 text-slate-800 shadow-sm text-lg font-medium">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-video size-6" aria-hidden="true"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"></path><rect x="2" y="6" width="14" height="12" rx="2"></rect></svg>
                             <span>Try demo</span>
                         </Link>

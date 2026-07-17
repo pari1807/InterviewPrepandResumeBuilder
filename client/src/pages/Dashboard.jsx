@@ -14,6 +14,7 @@ const Dashboard = () => {
     { bg: "bg-purple-50", text: "text-purple-600", border: "border-purple-200", icon: "bg-purple-500", shadow: "hover:shadow-purple-100" }
   ]
   const [allResumes, setAllResumes] = useState([])
+  const [user, setUser] = useState(null)
   const [showCreateResume, setShowCreateResume] = useState(false)
   const [showUploadResume, setShowUploadResume] = useState(false)
   const [title, setTitle] = useState("")
@@ -128,6 +129,42 @@ const Dashboard = () => {
     setShowUploadResume(false);
     
     const newId = 'resume-' + Math.random().toString(36).substring(2, 11)
+    
+    if (resumeFile && resumeFile.name.endsWith('.json')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const imported = JSON.parse(e.target.result);
+          const newResume = {
+            _id: newId,
+            title: title || imported.title || resumeFile.name.replace(/\.json$/i, ''),
+            personal_info: imported.personal_info || {},
+            professional_summary: imported.professional_summary || '',
+            experience: imported.experience || [],
+            project: imported.project || imported.projects || [],
+            education: imported.education || [],
+            skills: imported.skills || [],
+            certifications: imported.certifications || imported.certificates || [],
+            achievements: imported.achievements || [],
+            extracurricular_activities: imported.extracurricular_activities || imported.extracurricularActivities || imported.activities || [],
+            template: imported.template || 'classic',
+            accentColor: imported.accentColor || imported.accent_color || '#10b981',
+            public: Boolean(imported.public),
+            createdAt: imported.createdAt || new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }
+          localStorage.setItem(`resume-builder:draft:${newId}`, JSON.stringify(newResume));
+          setTitle("");
+          setResumeFile(null);
+          navigate(`/app/builder/${newId}`);
+        } catch (err) {
+          alert("Error parsing JSON file. Please make sure it is a valid resume JSON.");
+        }
+      };
+      reader.readAsText(resumeFile);
+      return;
+    }
+
     const newResume = {
       _id: newId,
       title: title || (resumeFile ? resumeFile.name.replace(/\.pdf$/i, '') : "Imported Resume"),
@@ -154,6 +191,14 @@ const Dashboard = () => {
   }
   useEffect(() => {
     loadAllResumes()
+    const storedUser = localStorage.getItem("user")
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser))
+      } catch (e) {
+        console.error(e)
+      }
+    }
   },[])
 
   return (
@@ -161,7 +206,7 @@ const Dashboard = () => {
         <div className='max-w-7xl mx-auto px-6 py-10'>
             <header className='mb-12 flex flex-col md:flex-row md:items-end justify-between gap-4'>
                 <div>
-                  <h1 className='text-4xl font-extrabold text-slate-900 tracking-tight'>Welcome back, <span className="text-indigo-600">Paritosh</span></h1>
+                   <h1 className='text-4xl font-extrabold text-slate-900 tracking-tight'>Welcome back, <span className="text-indigo-600">{user?.name || "User"}</span></h1>
                   <p className='text-slate-500 mt-2 text-lg'>Ready to build your next career-defining resume?</p>
                 </div>
             </header>
@@ -333,15 +378,15 @@ const Dashboard = () => {
                               <div className='p-4 bg-white rounded-2xl shadow-sm border border-slate-100 group-hover:scale-110 transition-transform'>
                                 <UploadCloudIcon className='size-8 text-purple-500' />
                               </div>
-                              <div className='text-center'>
-                                <p className='text-sm font-bold text-slate-700'>Drop your PDF here</p>
-                                <p className='text-xs text-slate-400 mt-1'>or click to browse files</p>
+                              <div className="text-center">
+                                <p className="text-sm font-bold text-slate-700">Drop your PDF or JSON here</p>
+                                <p className="text-xs text-slate-400 mt-1">or click to browse files</p>
                               </div>
                             </>
                           )}
                         </div>
                       </label>
-                      <input type="file" id='resume-input' accept='.pdf' onChange={(e)=>setResumeFile(e.target.files[0])} className='hidden' required/>
+                      <input type="file" id='resume-input' accept='.pdf,.json' onChange={(e)=>setResumeFile(e.target.files[0])} className='hidden' required/>
                     </div>
 
                     <div className='flex gap-3'>
