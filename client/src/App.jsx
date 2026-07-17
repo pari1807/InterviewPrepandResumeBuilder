@@ -6,20 +6,21 @@ import Dashboard from './pages/Dashboard'
 import ResumeBuilder from './pages/ResumeBuilder'
 import Preview from './pages/Preview'
 import Login from './pages/Login'
+import PageLoader from './components/PageLoader'
 
 const App = () => {
   return (
     <>
       <Routes>
-        <Route path ='/' element={<Home />} />
+        <Route path ='/' element={<PageLoader><Home /></PageLoader>} />
 
         <Route path='app' element = {<Layout />}>
-          <Route index element={<Dashboard />} />
-          <Route path='builder/:resumeId' element={<ResumeBuilder />} />
+          <Route index element={<PageLoader><Dashboard /></PageLoader>} />
+          <Route path='builder/:resumeId' element={<PageLoader><ResumeBuilder /></PageLoader>} />
         </Route>
 
-        <Route path = 'view/:resumeId' element={<Preview />} />
-        <Route path ='login' element={<Login />} />
+        <Route path = 'view/:resumeId' element={<PageLoader><Preview /></PageLoader>} />
+        <Route path ='login' element={<PageLoader><Login /></PageLoader>} />
       </Routes>
     </>
   )

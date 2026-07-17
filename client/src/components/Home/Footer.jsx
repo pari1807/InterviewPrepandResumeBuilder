@@ -28,9 +28,9 @@ const Footer = () => {
             </p>
           </div>
 
-          <button className="bg-white text-green-700 px-7 py-3 rounded-xl font-semibold hover:scale-105 transition">
+          <Link to="/app" className="bg-white text-green-700 px-7 py-3 rounded-xl font-semibold hover:scale-105 transition inline-block">
             Start Building →
-          </button>
+          </Link>
 
         </div>
 
@@ -93,10 +93,10 @@ const Footer = () => {
               </h4>
 
               <ul className="space-y-3 text-slate-600">
-                <li><Link to="/templates">Templates</Link></li>
-                <li><Link to="/builder">Resume Builder</Link></li>
-                <li><Link to="/ats-checker">ATS Checker</Link></li>
-                <li><Link to="/pricing">Pricing</Link></li>
+                <li><Link to="/app">Templates</Link></li>
+                <li><Link to="/app">Resume Builder</Link></li>
+                <li><Link to="/app">ATS Checker</Link></li>
+                <li><Link to="/app">Pricing</Link></li>
               </ul>
             </div>
 

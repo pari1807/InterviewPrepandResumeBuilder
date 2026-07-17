@@ -1,8 +1,9 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 
 const CallToAction = () => {
   return (
-    <section className="bg-white py-20 px-4">
+    <section id="cta" className="bg-white py-20 px-4">
   <div className="max-w-6xl mx-auto">
 
     <div className="
@@ -65,7 +66,7 @@ const CallToAction = () => {
 
         <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
 
-          <button className="
+          <Link to="/app" className="
             bg-green-600
             hover:bg-green-700
             text-white
@@ -78,11 +79,12 @@ const CallToAction = () => {
             hover:scale-105
             shadow-lg
             shadow-green-200
+            inline-block
           ">
             Build My Resume →
-          </button>
+          </Link>
 
-          <button className="
+          <Link to="/app" className="
             bg-white
             border
             border-green-200
@@ -93,9 +95,10 @@ const CallToAction = () => {
             font-medium
             hover:bg-green-50
             transition-all
+            inline-block
           ">
             View Templates
-          </button>
+          </Link>
 
         </div>
 

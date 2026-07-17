@@ -239,7 +239,7 @@ const Dashboard = () => {
             </div>
 
             {showCreateResume && (
-              <div onClick={()=>setShowCreateResume(false)} className='fixed inset-0 bg-slate-900/40 backdrop-blur-md z-100 flex items-center justify-center p-4 animate-in fade-in duration-300'>
+              <div onClick={()=>setShowCreateResume(false)} className='fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300'>
                 <form 
                   onClick={e=>e.stopPropagation()} 
                   onSubmit={createResume}
@@ -256,6 +256,7 @@ const Dashboard = () => {
                       <label className='block text-sm font-semibold text-slate-500 mb-2'>Resume Title</label>
                       <input 
                         type="text" 
+                        value={title}
                         onChange={(e)=>setTitle(e.target.value)} 
                         placeholder='e.g. Your Name - Designation' 
                         className='w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-300 font-medium' 
@@ -292,7 +293,7 @@ const Dashboard = () => {
             )}
 
             {showUploadResume && (
-              <div onClick={()=>setShowUploadResume(false)} className='fixed inset-0 bg-slate-900/40 backdrop-blur-md z-100 flex items-center justify-center p-4 animate-in fade-in duration-300'>
+              <div onClick={()=>setShowUploadResume(false)} className='fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300'>
                 <form 
                   onClick={e=>e.stopPropagation()} 
                   onSubmit={uploadResume}
@@ -309,6 +310,7 @@ const Dashboard = () => {
                       <label className='block text-sm font-semibold text-slate-500 mb-2'>Resume Title</label>
                       <input 
                         type="text" 
+                        value={title}
                         onChange={(e)=>setTitle(e.target.value)} 
                         placeholder='e.g. My Existing Resume' 
                         className='w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 outline-none transition-all placeholder:text-slate-300 font-medium' 
@@ -374,7 +376,7 @@ const Dashboard = () => {
 {showEditTitle && (
   <div
     onClick={() => setShowEditTitle(false)}
-    className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-50 flex items-center justify-center p-4"
+    className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[100] flex items-center justify-center p-4"
   >
     <form
       onClick={(e) => e.stopPropagation()}

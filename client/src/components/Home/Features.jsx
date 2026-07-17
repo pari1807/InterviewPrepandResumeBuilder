@@ -48,7 +48,7 @@ const Features = () => {
 
   return (
         <>
-            <section className="bg-[radial-gradient(circle_at_top,#ecfdf5_0%,#f8fafc_45%,#e2e8f0_100%)] py-20 px-4">
+            <section id="features" className="bg-[radial-gradient(circle_at_top,#ecfdf5_0%,#f8fafc_45%,#e2e8f0_100%)] py-20 px-4">
                 <div className="max-w-6xl mx-auto">
                     <div className="text-center mb-9">
                         <span className="text-xs tracking-[0.24em] uppercase text-emerald-700 bg-white/80 border border-emerald-200 rounded-full px-6 py-2">Features</span>

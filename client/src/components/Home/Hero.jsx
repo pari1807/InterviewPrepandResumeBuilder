@@ -95,10 +95,10 @@ const Hero = () => {
                             Get started
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-right ml-2 size-5" aria-hidden="true"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
                         </Link>
-                        <button className="flex items-center gap-3 border border-slate-300 hover:bg-white transition rounded-full px-8 h-14 text-slate-800 shadow-sm text-lg font-medium">
+                        <Link to="/app" className="flex items-center gap-3 border border-slate-300 hover:bg-white transition rounded-full px-8 h-14 text-slate-800 shadow-sm text-lg font-medium">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-video size-6" aria-hidden="true"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"></path><rect x="2" y="6" width="14" height="12" rx="2"></rect></svg>
                             <span>Try demo</span>
-                        </button>
+                        </Link>
                     </div>
 
                     <p className="py-2 text-slate-600 mt-8 md:mt-14 uppercase tracking-widest text-sm font-medium">Trusted by modern teams and independent professionals</p>

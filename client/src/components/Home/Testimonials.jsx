@@ -80,7 +80,7 @@ const Testimonials = () => {
                     }
                 `}
             </style>
-            <section className="relative overflow-hidden py-20 px-4 bg-[radial-gradient(circle_at_top,#ecfdf5_0%,#f8fafc_45%,#e2e8f0_100%)]">
+            <section id="testimonials" className="relative overflow-hidden py-20 px-4 bg-[radial-gradient(circle_at_top,#ecfdf5_0%,#f8fafc_45%,#e2e8f0_100%)]">
                 <div className="absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-emerald-300 to-transparent" />
                 <div className="absolute -top-24 left-1/4 size-72 rounded-full bg-emerald-200/40 blur-3xl" />
                 <div className="absolute -bottom-24 right-1/4 size-72 rounded-full bg-teal-200/40 blur-3xl" />
