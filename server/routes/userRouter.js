@@ -1,11 +1,13 @@
 import express from "express";
 import {
-    getUserById,
-    loginUser,
-    registerUser,
     sendOTP,
+    registerUser,
+    loginUser,
     forgotPassword,
-    resetPassword,
+    resetPassword
+} from "../controllers/authController.js";
+import {
+    getUserById,
     updateProfile,
     requestEmailChange,
     confirmEmailChange,
@@ -16,17 +18,15 @@ import protect from "../middleware/authMiddleware.js";
 
 const userRouter = express.Router();
 
+// Authentication Routes
 userRouter.post('/send-otp', sendOTP);
 userRouter.post('/register', registerUser);
 userRouter.post('/login', loginUser);
-userRouter.get('/data', protect, getUserById);
-user
-
-// Password Reset Routes
 userRouter.post('/forgot-password', forgotPassword);
 userRouter.post('/reset-password', resetPassword);
 
-// Profile Update Routes
+// Profile & Account Settings Routes
+userRouter.get('/data', protect, getUserById);
 userRouter.post('/update-profile', protect, updateProfile);
 userRouter.post('/request-email-change', protect, requestEmailChange);
 userRouter.post('/confirm-email-change', protect, confirmEmailChange);

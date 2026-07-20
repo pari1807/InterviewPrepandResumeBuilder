@@ -1,9 +1,14 @@
 import jwt from 'jsonwebtoken'
 
 const protect = async(req, res, next) => {
-    const token = req.headers.authorization;
+    let token = req.headers.authorization;
     if(!token){
         return res.status(401).json({message: 'Unauthorized'});
+    }
+
+    // Support standard Bearer prefix if present
+    if (token.startsWith('Bearer ')) {
+        token = token.split(' ')[1];
     }
 
     try{
