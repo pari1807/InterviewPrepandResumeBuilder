@@ -1,15 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import logo from "../assets/logo.svg";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { login } from "../app/features/authSlice";
+import api from "../configs/api";
 
 export default function Login() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const { user, loading: authLoading } = useSelector((state) => state.auth);
 
   const state = searchParams.get("state") || "Login";
   const isLogin = state === "Login";
   const isSignUp = state === "SignUp";
   const isForgotPassword = state === "ForgotPassword";
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate("/app");
+    }
+  }, [user, authLoading, navigate]);
 
   const changeState = (newState) => {
     setSearchParams({ state: newState });
@@ -38,26 +50,10 @@ export default function Login() {
     try {
       if (isLogin) {
         // Log In
-        const response = await fetch("/api/users/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
-        });
-        
-        let data;
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          data = await response.json();
-        } else {
-          const text = await response.text();
-          throw new Error(text || `Server returned error status ${response.status}. Make sure the backend server is running!`);
-        }
-
-        if (!response.ok) {
-          throw new Error(data.message || "Failed to log in");
-        }
+        const { data } = await api.post("/api/users/login", { email, password });
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
+        dispatch(login({ token: data.token, user: data.user }));
         navigate("/app");
       } else if (isSignUp) {
         // Sign Up Flow
@@ -66,97 +62,30 @@ export default function Login() {
             throw new Error("Passwords do not match");
           }
           // Send OTP request
-          const response = await fetch("/api/users/send-otp", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email }),
-          });
-          
-          let data;
-          const contentType = response.headers.get("content-type");
-          if (contentType && contentType.includes("application/json")) {
-            data = await response.json();
-          } else {
-            const text = await response.text();
-            throw new Error(text || `Server returned error status ${response.status}. Make sure the backend server is running!`);
-          }
-
-          if (!response.ok) {
-            throw new Error(data.message || "Failed to send OTP");
-          }
+          await api.post("/api/users/send-otp", { email });
           setIsOtpSent(true);
         } else {
           // Register request with OTP
-          const response = await fetch("/api/users/register", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name, email, password, otp }),
-          });
-          
-          let data;
-          const contentType = response.headers.get("content-type");
-          if (contentType && contentType.includes("application/json")) {
-            data = await response.json();
-          } else {
-            const text = await response.text();
-            throw new Error(text || `Server returned error status ${response.status}. Make sure the backend server is running!`);
-          }
-
-          if (!response.ok) {
-            throw new Error(data.message || "Verification failed");
-          }
+          const { data } = await api.post("/api/users/register", { name, email, password, otp });
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user));
+          dispatch(login({ token: data.token, user: data.user }));
           navigate("/app");
         }
       } else if (isForgotPassword) {
         // Forgot Password Flow
         if (!isOtpSent) {
-          const response = await fetch("/api/users/forgot-password", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email }),
-          });
-          
-          let data;
-          const contentType = response.headers.get("content-type");
-          if (contentType && contentType.includes("application/json")) {
-            data = await response.json();
-          } else {
-            const text = await response.text();
-            throw new Error(text || `Server returned error status ${response.status}. Make sure the backend server is running!`);
-          }
-
-          if (!response.ok) {
-            throw new Error(data.message || "Email request failed");
-          }
+          await api.post("/api/users/forgot-password", { email });
           setIsOtpSent(true);
         } else {
           // Reset Password with OTP
-          const response = await fetch("/api/users/reset-password", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, otp, newPassword: password }),
-          });
-          
-          let data;
-          const contentType = response.headers.get("content-type");
-          if (contentType && contentType.includes("application/json")) {
-            data = await response.json();
-          } else {
-            const text = await response.text();
-            throw new Error(text || `Server returned error status ${response.status}. Make sure the backend server is running!`);
-          }
-
-          if (!response.ok) {
-            throw new Error(data.message || "Reset failed");
-          }
+          await api.post("/api/users/reset-password", { email, otp, newPassword: password });
           alert("Password reset successful! Please log in with your new password.");
           changeState("Login");
         }
       }
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message || "An error occurred");
     } finally {
       setLoading(false);
     }

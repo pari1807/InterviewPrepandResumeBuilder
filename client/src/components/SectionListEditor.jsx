@@ -1,5 +1,13 @@
-import { ChevronDown, ChevronUp, GripVertical, Plus, Trash2 } from 'lucide-react'
+// =====================================================
+// AI-CHANGE
+// Date: 2026-07-20
+// Reason: Integrate AI section enhancement (experience job descriptions, projects, education details) in lists.
+// Changes: Added handleFieldEnhance. Rendered AI Enhance button for textareas with loading spinner and status text. Imported api, Sparkles, Loader2.
+// Connected Files: client/src/configs/api.js, server/routes/aiRoutes.js
+// =====================================================
+import { ChevronDown, ChevronUp, GripVertical, Plus, Trash2, Sparkles, Loader2 } from 'lucide-react'
 import React, { useMemo, useState } from 'react'
+import api from '../configs/api'
 
 const isEmptyValue = (value) => value === undefined || value === null || String(value).trim() === ''
 
@@ -17,6 +25,55 @@ const SectionListEditor = ({
     getItemSummary,
 }) => {
     const [collapsedMap, setCollapsedMap] = useState({})
+    const [aiLoadingMap, setAiLoadingMap] = useState({})
+    const [aiLoadingTextMap, setAiLoadingTextMap] = useState({})
+
+    const handleFieldEnhance = async (itemIndex, fieldKey, currentValue) => {
+        if (!currentValue || !currentValue.trim()) {
+            alert("Please write something first so AI can enhance it.");
+            return;
+        }
+
+        const mapKey = `${itemIndex}-${fieldKey}`;
+        setAiLoadingMap((prev) => ({ ...prev, [mapKey]: true }));
+        setAiLoadingTextMap((prev) => ({ ...prev, [mapKey]: "Enhancing..." }));
+
+        try {
+            const loadingTexts = ["Optimizing grammar...", "Polishing phrasing...", "Applying action verbs..."];
+            let loadingIdx = 0;
+            const textTimer = setInterval(() => {
+                setAiLoadingTextMap((prev) => ({ ...prev, [mapKey]: loadingTexts[loadingIdx % loadingTexts.length] }));
+                loadingIdx++;
+            }, 1500);
+
+            // Determine section based on title or labels
+            let section = 'experience';
+            if (title.toLowerCase().includes('project')) {
+                section = 'projects';
+            } else if (title.toLowerCase().includes('education')) {
+                section = 'education';
+            } else if (title.toLowerCase().includes('achievement')) {
+                section = 'achievements';
+            } else if (title.toLowerCase().includes('activity') || title.toLowerCase().includes('extracurricular')) {
+                section = 'extracurricular_activities';
+            }
+
+            const response = await api.post("/api/ai/enhance-section", {
+                section: section,
+                userContent: currentValue
+            });
+
+            clearInterval(textTimer);
+            if (response.data && response.data.enhancedContent) {
+                updateItem(itemIndex, fieldKey, response.data.enhancedContent.trim());
+            }
+        } catch (error) {
+            console.error(error);
+            alert(error.response?.data?.message || error.message || "Failed to enhance text");
+        } finally {
+            setAiLoadingMap((prev) => ({ ...prev, [mapKey]: false }));
+        }
+    };
 
     const visibleEmptyTitle = emptyTitle || `No ${title.toLowerCase()} added yet`
     const visibleEmptyDescription = emptyDescription || `Click "${addLabel || `Add ${itemLabel}`}" to get started.`
@@ -181,10 +238,31 @@ const SectionListEditor = ({
                                                 {fieldGroups.trailingFields.map((field) => {
                                                     const fieldValue = item?.[field.key]
                                                     const inputClassName = 'w-full min-h-24 resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100'
+                                                    const isEnhancing = Boolean(aiLoadingMap[`${index}-${field.key}`])
 
                                                     return (
-                                                        <label key={field.key}>
-                                                            <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500">{field.label}</span>
+                                                        <label key={field.key} className="block space-y-1">
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="block text-xs font-medium uppercase tracking-wide text-slate-500">{field.label}</span>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleFieldEnhance(index, field.key, fieldValue)}
+                                                                    disabled={isEnhancing}
+                                                                    className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 transition cursor-pointer"
+                                                                >
+                                                                    {isEnhancing ? (
+                                                                        <>
+                                                                            <Loader2 className="size-3 animate-spin" />
+                                                                            <span>{aiLoadingTextMap[`${index}-${field.key}`] || 'Enhancing...'}</span>
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                            <Sparkles className="size-3" />
+                                                                            <span>AI Enhance</span>
+                                                                        </>
+                                                                    )}
+                                                                </button>
+                                                            </div>
                                                             <textarea
                                                                 rows={field.rows || 4}
                                                                 value={fieldValue || ''}

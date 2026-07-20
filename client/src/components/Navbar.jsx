@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import logo from '../assets/logo.svg'
+import { useSelector, useDispatch } from 'react-redux'
+import { login, logout } from '../app/features/authSlice'
+import api from '../configs/api'
 
 const Navbar = () => {
-    const [user, setUser] = useState(null);
+    const { user } = useSelector(state => state.auth);
+    const dispatch = useDispatch();
     const navigate = useNavigate();
 
     // Modal States
@@ -21,21 +25,16 @@ const Navbar = () => {
     const [modalSuccess, setModalSuccess] = useState("");
     const [modalLoading, setModalLoading] = useState(false);
 
+    // Refresh profileName local input state when user updates or modal opens
     useEffect(() => {
-        const storedUser = localStorage.getItem("user");
-        if (storedUser) {
-            try {
-                setUser(JSON.parse(storedUser));
-            } catch (e) {
-                console.error(e);
-            }
+        if (user) {
+            setProfileName(user.name);
         }
-    }, [showProfileModal]); // Refresh user representation when settings open/close
+    }, [user, showProfileModal]);
 
     const logoutUser = () => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        navigate('/')
+        dispatch(logout());
+        navigate('/');
     }
 
     const openModal = () => {
@@ -61,23 +60,12 @@ const Navbar = () => {
 
         try {
             const token = localStorage.getItem("token");
-            const response = await fetch("/api/users/update-profile", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": token
-                },
-                body: JSON.stringify({ name: profileName })
-            });
-            const data = await response.json();
-            if (!response.ok) {
-                throw new Error(data.message || "Failed to update name");
-            }
+            const { data } = await api.post("/api/users/update-profile", { name: profileName });
             localStorage.setItem("user", JSON.stringify(data.user));
-            setUser(data.user);
+            dispatch(login({ token, user: data.user }));
             setModalSuccess("Name updated successfully!");
         } catch (err) {
-            setModalError(err.message);
+            setModalError(err.response?.data?.message || err.message);
         } finally {
             setModalLoading(false);
         }
@@ -90,23 +78,11 @@ const Navbar = () => {
         setModalLoading(true);
 
         try {
-            const token = localStorage.getItem("token");
-            const response = await fetch("/api/users/request-email-change", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": token
-                },
-                body: JSON.stringify({ newEmail })
-            });
-            const data = await response.json();
-            if (!response.ok) {
-                throw new Error(data.message || "Failed to request email change");
-            }
+            await api.post("/api/users/request-email-change", { newEmail });
             setIsEmailOtpSent(true);
             setModalSuccess("OTP sent to new email! Please verify below.");
         } catch (err) {
-            setModalError(err.message);
+            setModalError(err.response?.data?.message || err.message);
         } finally {
             setModalLoading(false);
         }
@@ -120,26 +96,15 @@ const Navbar = () => {
 
         try {
             const token = localStorage.getItem("token");
-            const response = await fetch("/api/users/confirm-email-change", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": token
-                },
-                body: JSON.stringify({ newEmail, otp: emailOtp })
-            });
-            const data = await response.json();
-            if (!response.ok) {
-                throw new Error(data.message || "Failed to verify email change");
-            }
+            const { data } = await api.post("/api/users/confirm-email-change", { newEmail, otp: emailOtp });
             localStorage.setItem("user", JSON.stringify(data.user));
-            setUser(data.user);
+            dispatch(login({ token, user: data.user }));
             setIsEmailOtpSent(false);
             setNewEmail("");
             setEmailOtp("");
             setModalSuccess("Email address changed successfully!");
         } catch (err) {
-            setModalError(err.message);
+            setModalError(err.response?.data?.message || err.message);
         } finally {
             setModalLoading(false);
         }
@@ -152,22 +117,11 @@ const Navbar = () => {
         setModalLoading(true);
 
         try {
-            const token = localStorage.getItem("token");
-            const response = await fetch("/api/users/request-password-change", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": token
-                }
-            });
-            const data = await response.json();
-            if (!response.ok) {
-                throw new Error(data.message || "Failed to request password change");
-            }
+            await api.post("/api/users/request-password-change");
             setIsPasswordOtpSent(true);
             setModalSuccess("OTP sent to your registered email address!");
         } catch (err) {
-            setModalError(err.message);
+            setModalError(err.response?.data?.message || err.message);
         } finally {
             setModalLoading(false);
         }
@@ -180,25 +134,13 @@ const Navbar = () => {
         setModalLoading(true);
 
         try {
-            const token = localStorage.getItem("token");
-            const response = await fetch("/api/users/confirm-password-change", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": token
-                },
-                body: JSON.stringify({ otp: passwordOtp, newPassword })
-            });
-            const data = await response.json();
-            if (!response.ok) {
-                throw new Error(data.message || "Failed to verify password change");
-            }
+            await api.post("/api/users/confirm-password-change", { otp: passwordOtp, newPassword });
             setIsPasswordOtpSent(false);
             setNewPassword("");
             setPasswordOtp("");
             setModalSuccess("Password changed successfully!");
         } catch (err) {
-            setModalError(err.message);
+            setModalError(err.response?.data?.message || err.message);
         } finally {
             setModalLoading(false);
         }

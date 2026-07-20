@@ -1,8 +1,18 @@
+// =====================================================
+// AI-CHANGE
+// Date: 2026-07-20
+// Reason: Integrate backend MongoDB interactions (resumes listing, creation, uploading with AI PDF parser, title updates, deletion).
+// Changes: Imported api, Loader2, and pdfToText. Added AI-CHANGE comments.
+// Connected Files: client/src/configs/api.js, server/routes/resumeRouter.js, server/routes/aiRoutes.js
+// =====================================================
 import React from 'react'
-import { FilePenIcon, PlusIcon, UploadCloudIcon, TrashIcon, PencilIcon, XIcon  } from 'lucide-react'
+import { FilePenIcon, PlusIcon, UploadCloudIcon, TrashIcon, PencilIcon, XIcon, Loader2  } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { dummyResumeData } from '../assets/assets'
 import { useNavigate } from 'react-router-dom'
+import { useSelector } from 'react-redux'
+import api from '../configs/api'
+import pdfToText from 'react-pdftotext'
 
 const Dashboard = () => {
   const colors = [
@@ -14,21 +24,44 @@ const Dashboard = () => {
     { bg: "bg-purple-50", text: "text-purple-600", border: "border-purple-200", icon: "bg-purple-500", shadow: "hover:shadow-purple-100" }
   ]
   const [allResumes, setAllResumes] = useState([])
-  const [user, setUser] = useState(null)
+  const { user, token } = useSelector(state => state.auth)
   const [showCreateResume, setShowCreateResume] = useState(false)
   const [showUploadResume, setShowUploadResume] = useState(false)
   const [title, setTitle] = useState("")
   const [resumeFile, setResumeFile] = useState(null)
   const [editResumeId, setEditResumeId] = useState("")
   const [showEditTitle, setShowEditTitle] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   const navigate = useNavigate();
 
-  const loadAllResumes = () => {
-    // Start with all dummy resumes mapped by ID
+  const loadAllResumes = async () => {
+    let backendResumes = [];
+    if (token) {
+      try {
+        const { data } = await api.get('/api/resumes');
+        if (data && data.resumes) {
+          backendResumes = data.resumes;
+        }
+      } catch (err) {
+        console.error("Failed to load resumes from database:", err);
+      }
+    }
+
     const resumesMap = {}
+    
+    // Load dummy resumes first
     dummyResumeData.forEach(resume => {
       resumesMap[resume._id] = { ...resume }
+    })
+
+    // Overwrite with database resumes
+    backendResumes.forEach(resume => {
+      resumesMap[resume._id] = {
+        ...resumesMap[resume._id],
+        ...resume,
+        _id: resume._id,
+      }
     })
 
     // Scan localStorage for drafts
@@ -53,7 +86,6 @@ const Dashboard = () => {
       }
     }
 
-    // Convert map to array and sort by updatedAt desc
     const mergedList = Object.values(resumesMap).sort((a, b) => {
       return new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0)
     })
@@ -61,15 +93,22 @@ const Dashboard = () => {
     setAllResumes(mergedList)
   }
 
-  const deleteResume = (id) => {
+  const deleteResume = async (id) => {
     const confirmDelete = window.confirm("Are you sure you want to delete this resume? This action cannot be undone.");
     if(confirmDelete) {
+      if (token && !id.startsWith('resume-')) {
+        try {
+          await api.delete(`/api/resumes/${id}`);
+        } catch (err) {
+          console.error("Failed to delete resume from backend database:", err);
+        }
+      }
       localStorage.removeItem(`resume-builder:draft:${id}`)
       setAllResumes(prev => prev.filter(resume => resume._id !== id))
     }
   }
 
-  const updateResumeTitle = (e) => {
+  const updateResumeTitle = async (e) => {
     e.preventDefault()
     const resumeToEdit = allResumes.find(r => r._id === editResumeId)
     if (resumeToEdit) {
@@ -78,6 +117,21 @@ const Dashboard = () => {
         title: title,
         updatedAt: new Date().toISOString()
       }
+
+      if (token && !editResumeId.startsWith('resume-')) {
+        try {
+          const formData = new FormData();
+          formData.append("resumeId", editResumeId);
+          const dataToSave = { ...resumeToEdit, title };
+          formData.append("resumeData", JSON.stringify(dataToSave));
+          await api.put("/api/resumes/update", formData, {
+            headers: { "Content-Type": "multipart/form-data" }
+          });
+        } catch (err) {
+          console.error("Failed to update resume title on database:", err);
+        }
+      }
+
       localStorage.setItem(`resume-builder:draft:${editResumeId}`, JSON.stringify(updatedResume))
       setAllResumes(prev => prev.map(resume => 
         resume._id === editResumeId ? updatedResume : resume
@@ -99,9 +153,8 @@ const Dashboard = () => {
     event.preventDefault();
     setShowCreateResume(false);
     
-    const newId = 'resume-' + Math.random().toString(36).substring(2, 11)
-    const newResume = {
-      _id: newId,
+    const tempId = 'resume-' + Math.random().toString(36).substring(2, 11)
+    const newResumeData = {
       title: title || "Untitled Resume",
       personal_info: {},
       professional_summary: '',
@@ -115,94 +168,138 @@ const Dashboard = () => {
       template: 'classic',
       accentColor: '#10b981',
       public: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
-    
-    localStorage.setItem(`resume-builder:draft:${newId}`, JSON.stringify(newResume))
-    setTitle("")
-    navigate(`/app/builder/${newId}`)
-  }
-
-  const uploadResume = async(event)=>{
-    event.preventDefault();
-    setShowUploadResume(false);
-    
-    const newId = 'resume-' + Math.random().toString(36).substring(2, 11)
-    
-    if (resumeFile && resumeFile.name.endsWith('.json')) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const imported = JSON.parse(e.target.result);
-          const newResume = {
-            _id: newId,
-            title: title || imported.title || resumeFile.name.replace(/\.json$/i, ''),
-            personal_info: imported.personal_info || {},
-            professional_summary: imported.professional_summary || '',
-            experience: imported.experience || [],
-            project: imported.project || imported.projects || [],
-            education: imported.education || [],
-            skills: imported.skills || [],
-            certifications: imported.certifications || imported.certificates || [],
-            achievements: imported.achievements || [],
-            extracurricular_activities: imported.extracurricular_activities || imported.extracurricularActivities || imported.activities || [],
-            template: imported.template || 'classic',
-            accentColor: imported.accentColor || imported.accent_color || '#10b981',
-            public: Boolean(imported.public),
-            createdAt: imported.createdAt || new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          }
-          localStorage.setItem(`resume-builder:draft:${newId}`, JSON.stringify(newResume));
-          setTitle("");
-          setResumeFile(null);
-          navigate(`/app/builder/${newId}`);
-        } catch (err) {
-          alert("Error parsing JSON file. Please make sure it is a valid resume JSON.");
-        }
-      };
-      reader.readAsText(resumeFile);
-      return;
     }
 
-    const newResume = {
-      _id: newId,
-      title: title || (resumeFile ? resumeFile.name.replace(/\.pdf$/i, '') : "Imported Resume"),
-      personal_info: {},
-      professional_summary: '',
-      experience: [],
-      project: [],
-      education: [],
-      skills: [],
-      certifications: [],
-      achievements: [],
-      extracurricular_activities: [],
-      template: 'classic',
-      accentColor: '#10b981',
-      public: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
-    
-    localStorage.setItem(`resume-builder:draft:${newId}`, JSON.stringify(newResume))
-    setTitle("")
-    setResumeFile(null)
-    navigate(`/app/builder/${newId}`)
-  }
-  useEffect(() => {
-    loadAllResumes()
-    const storedUser = localStorage.getItem("user")
-    if (storedUser) {
+    if (token) {
       try {
-        setUser(JSON.parse(storedUser))
-      } catch (e) {
-        console.error(e)
+        setLoading(true);
+        const { data } = await api.post('/api/resumes/create', newResumeData);
+        if (data && data.resume) {
+          setTitle("");
+          setLoading(false);
+          navigate(`/app/builder/${data.resume._id}`);
+          return;
+        }
+      } catch (err) {
+        console.error("Failed to create resume on database, fallback to local draft:", err);
+      } finally {
+        setLoading(false);
       }
     }
+    
+    const newResume = {
+      ...newResumeData,
+      _id: tempId,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }
+
+    localStorage.setItem(`resume-builder:draft:${tempId}`, JSON.stringify(newResume))
+    setTitle("")
+    navigate(`/app/builder/${tempId}`)
+  }
+
+  const uploadResume = async (event) => {
+    event.preventDefault();
+    if (!resumeFile) {
+      alert("Please select a file first.");
+      return;
+    }
+    
+    setShowUploadResume(false);
+    setLoading(true);
+
+    try {
+      if (resumeFile.name.endsWith('.json')) {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          try {
+            const imported = JSON.parse(e.target.result);
+            if (token) {
+              const { data } = await api.post('/api/resumes/create', imported);
+              if (data && data.resume) {
+                setTitle("");
+                setResumeFile(null);
+                setLoading(false);
+                navigate(`/app/builder/${data.resume._id}`);
+                return;
+              }
+            }
+
+            const tempId = 'resume-' + Math.random().toString(36).substring(2, 11);
+            const newResume = {
+              ...imported,
+              _id: tempId,
+              title: title || imported.title || resumeFile.name.replace(/\.json$/i, ''),
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            };
+            localStorage.setItem(`resume-builder:draft:${tempId}`, JSON.stringify(newResume));
+            setTitle("");
+            setResumeFile(null);
+            setLoading(false);
+            navigate(`/app/builder/${tempId}`);
+          } catch (err) {
+            console.error(err);
+            alert("Error parsing JSON file. Please ensure it is a valid resume JSON.");
+            setLoading(false);
+          }
+        };
+        reader.readAsText(resumeFile);
+      } else if (resumeFile.name.endsWith('.pdf')) {
+        try {
+          const text = await pdfToText(resumeFile);
+          if (!text || !text.trim()) {
+            throw new Error("Could not extract any text from the PDF file. Please ensure the PDF is not scanned/image-only.");
+          }
+
+          if (token) {
+            const { data } = await api.post('/api/ai/upload-resume', {
+              resumeText: text,
+              title: title || resumeFile.name.replace(/\.pdf$/i, '')
+            });
+            
+            if (data && data.resumeId) {
+              setTitle("");
+              setResumeFile(null);
+              setLoading(false);
+              navigate(`/app/builder/${data.resumeId}`);
+              return;
+            }
+          }
+
+          throw new Error("Please log in to upload and parse resumes with Gemini AI.");
+        } catch (err) {
+          console.error("PDF Upload / Parse failed:", err);
+          alert(err.response?.data?.message || err.message || "Failed to extract content from PDF");
+          setLoading(false);
+        }
+      } else {
+        alert("Unsupported file type. Please upload a PDF or JSON file.");
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error(err);
+      alert(err.message);
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadAllResumes()
   },[])
 
   return (
-    <div className='min-h-[calc(100vh-64px)] bg-slate-50/30'>
+    <div className='min-h-[calc(100vh-64px)] bg-slate-50/30 relative'>
+      {loading && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] flex flex-col items-center justify-center">
+          <div className="relative flex flex-col items-center">
+            <div className="w-16 h-16 rounded-full border-4 border-slate-200 border-t-purple-600 animate-spin"></div>
+            <p className="mt-6 text-lg font-bold text-white uppercase tracking-widest animate-pulse">Parsing & Importing...</p>
+            <p className="text-xs text-slate-350 mt-2">Gemini AI is extracting structured details from your resume</p>
+          </div>
+        </div>
+      )}
         <div className='max-w-7xl mx-auto px-6 py-10'>
             <header className='mb-12 flex flex-col md:flex-row md:items-end justify-between gap-4'>
                 <div>

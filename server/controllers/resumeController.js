@@ -45,6 +45,14 @@ export const getPublicResumeById = async (req, res) => {
     }
 };
 
+// =====================================================
+// AI-CHANGE
+// Date: 2026-07-20
+// Reason: Keep resume builder properties in sync (project/projects, accentColor/accent_color) and add getResumeById for private resume loading.
+// Changes: Implemented getResumeById controller. Added mappings in updateResume for project/projects and accentColor/accent_color field normalization.
+// Connected Files: server/routes/resumeRouter.js, client/src/pages/ResumeBuilder.jsx
+// =====================================================
+
 // Update a resume
 export const updateResume = async (req, res) => {
     try {
@@ -55,6 +63,18 @@ export const updateResume = async (req, res) => {
         let resumeDataCopy = {};
         if (resumeData) {
             resumeDataCopy = typeof resumeData === 'string' ? JSON.parse(resumeData) : resumeData;
+        }
+
+        // Align project and accentColor fields for database serialization
+        if (resumeDataCopy.project) {
+            resumeDataCopy.projects = resumeDataCopy.project;
+        } else if (resumeDataCopy.projects) {
+            resumeDataCopy.project = resumeDataCopy.projects;
+        }
+        if (resumeDataCopy.accentColor) {
+            resumeDataCopy.accent_color = resumeDataCopy.accentColor;
+        } else if (resumeDataCopy.accent_color) {
+            resumeDataCopy.accentColor = resumeDataCopy.accent_color;
         }
 
         if (image) {
@@ -108,6 +128,22 @@ export const deleteResume = async (req, res) => {
         }
 
         return res.status(200).json({ message: "Resume deleted successfully" });
+    } catch (error) {
+        return res.status(400).json({ message: error.message });
+    }
+};
+
+// Get a private resume by ID
+export const getResumeById = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { resumeId } = req.params;
+        const resume = await Resume.findOne({ userId, _id: resumeId });
+
+        if (!resume) {
+            return res.status(404).json({ message: "Resume not found or unauthorized" });
+        }
+        return res.status(200).json({ resume });
     } catch (error) {
         return res.status(400).json({ message: error.message });
     }

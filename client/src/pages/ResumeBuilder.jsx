@@ -1,3 +1,10 @@
+// =====================================================
+// AI-CHANGE
+// Date: 2026-07-20
+// Reason: Integrate backend MongoDB persistence (loading and saving) for the resume builder.
+// Changes: Imported api (Axios wrapper) and useSelector (for auth check). Added header comments.
+// Connected Files: client/src/configs/api.js, server/controllers/resumeController.js
+// =====================================================
 import {
   ArrowLeftIcon,
   Award,
@@ -18,6 +25,8 @@ import {
 } from 'lucide-react'
 import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { useSelector } from 'react-redux'
+import api from '../configs/api'
 import { dummyResumeData } from '../assets/assets'
 import AchievementForm from '../components/AchievementForm'
 import ActivityForm from '../components/ActivityForm'
@@ -70,6 +79,7 @@ const normalizeResumeData = (resume = {}) => ({
 const ResumeBuilder = () => {
   const { resumeId } = useParams()
   const storageKey = useMemo(() => (resumeId ? `resume-builder:draft:${resumeId}` : 'resume-builder:draft:new'), [resumeId])
+  const { token } = useSelector((state) => state.auth)
 
   const [resumeData, setResumeData] = useState(() => buildEmptyResume(resumeId))
   const [activeSectionIndex, setActiveSectionIndex] = useState(0)
@@ -91,12 +101,28 @@ const ResumeBuilder = () => {
 
   const activeSection = sections[activeSectionIndex] || sections[0]
 
-  const loadResume = () => {
+  const loadResume = async () => {
     if (!resumeId) {
       setResumeData(buildEmptyResume())
       return
     }
 
+    // Try fetching from backend if user is logged in and it's not a purely local draft ID
+    const isLocalDraft = resumeId.startsWith('resume-');
+    if (token && !isLocalDraft) {
+      try {
+        const { data } = await api.get(`/api/resumes/${resumeId}`);
+        if (data && data.resume) {
+          setResumeData(normalizeResumeData(data.resume));
+          document.title = `Resume Builder - ${data.resume.title || 'Untitled'}`;
+          return;
+        }
+      } catch (err) {
+        console.error("Failed to load resume from backend:", err);
+      }
+    }
+
+    // Fallback: local storage
     const storedDraft = localStorage.getItem(storageKey)
     if (storedDraft) {
       try {
@@ -107,6 +133,7 @@ const ResumeBuilder = () => {
       }
     }
 
+    // Fallback: dummy data
     const resume = dummyResumeData.find((entry) => entry._id === resumeId)
     if (resume) {
       setResumeData(normalizeResumeData(resume))
@@ -119,15 +146,37 @@ const ResumeBuilder = () => {
   useEffect(() => {
     loadResume()
     setActiveSectionIndex(0)
-  }, [resumeId, storageKey])
+  }, [resumeId, storageKey, token])
 
+  // Save changes locally for pure local drafts
   useEffect(() => {
     if (!resumeId) return
-    localStorage.setItem(storageKey, JSON.stringify(resumeData))
+    const isLocalDraft = resumeId.startsWith('resume-');
+    if (isLocalDraft) {
+      localStorage.setItem(storageKey, JSON.stringify(resumeData))
+    }
   }, [resumeId, resumeData, storageKey])
 
-  const changeResumeVisibility = () => {
-    setResumeData((prev) => ({ ...prev, public: !prev.public }))
+  const changeResumeVisibility = async () => {
+    const nextPublicState = !resumeData.public;
+    setResumeData((prev) => ({ ...prev, public: nextPublicState }));
+
+    const isLocalDraft = resumeId.startsWith('resume-');
+    if (token && !isLocalDraft) {
+      try {
+        const formData = new FormData();
+        formData.append("resumeId", resumeId);
+        const dataToSave = { ...resumeData, public: nextPublicState };
+        formData.append("resumeData", JSON.stringify(dataToSave));
+        formData.append("removeBackground", String(removeBackground));
+
+        await api.put("/api/resumes/update", formData, {
+          headers: { "Content-Type": "multipart/form-data" }
+        });
+      } catch (err) {
+        console.error("Failed to update visibility on backend:", err);
+      }
+    }
   }
 
   const handleShare = async () => {
@@ -146,10 +195,50 @@ const ResumeBuilder = () => {
     window.print()
   }
 
-  const saveResume = () => {
-    if (!resumeId) return
-    localStorage.setItem(storageKey, JSON.stringify(resumeData))
-    setLastSavedAt(new Date())
+  const saveResume = async () => {
+    if (!resumeId) return;
+
+    const isLocalDraft = resumeId.startsWith('resume-');
+    if (token && !isLocalDraft) {
+      try {
+        setLastSavedAt(null);
+        
+        // Deep copy state object to prevent react internal side-effects
+        const dataToSave = structuredClone(resumeData);
+        
+        const formData = new FormData();
+        formData.append("resumeId", resumeId);
+
+        // Handle profile picture File uploads from PersonInfo.jsx
+        if (dataToSave.personal_info && typeof dataToSave.personal_info.image === 'object') {
+          formData.append("image", dataToSave.personal_info.image);
+          dataToSave.personal_info.image = '';
+        }
+
+        formData.append("resumeData", JSON.stringify(dataToSave));
+        formData.append("removeBackground", String(removeBackground));
+
+        const { data } = await api.put("/api/resumes/update", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+
+        if (data && data.resume) {
+          setResumeData(normalizeResumeData(data.resume));
+          localStorage.removeItem(storageKey);
+        }
+        setLastSavedAt(new Date());
+        alert("Resume successfully saved to cloud!");
+      } catch (err) {
+        console.error("Failed to save resume on backend:", err);
+        alert(err.response?.data?.message || err.message || "Failed to save changes to cloud");
+      }
+    } else {
+      localStorage.setItem(storageKey, JSON.stringify(resumeData))
+      setLastSavedAt(new Date())
+      alert("Draft changes saved locally!");
+    }
   }
 
   const renderActiveSection = () => {

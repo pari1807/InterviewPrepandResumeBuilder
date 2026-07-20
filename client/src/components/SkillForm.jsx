@@ -1,8 +1,18 @@
-import { Plus, Sparkles, X } from 'lucide-react'
+// =====================================================
+// AI-CHANGE
+// Date: 2026-07-20
+// Reason: Integrate AI Skills list formatting/normalizing to standard ATS terminology.
+// Changes: Implemented handleAiEnhance using the generic section enhancer. Added Loader2, api imports and the AI Enhance button next to the section title.
+// Connected Files: client/src/configs/api.js, server/routes/aiRoutes.js
+// =====================================================
+import { Plus, Sparkles, X, Loader2 } from 'lucide-react'
 import React, { useState } from 'react'
+import api from '../configs/api'
 
 const SkillForm = ({ data, onChange }) => {
     const [newSkill, setNewSkill] = useState('')
+    const [loading, setLoading] = useState(false);
+    const [loadingText, setLoadingText] = useState("Enhancing...");
 
     const addSkill = () => {
         const skillValue = newSkill.trim()
@@ -23,11 +33,69 @@ const SkillForm = ({ data, onChange }) => {
         }
     }
 
+    const handleAiEnhance = async () => {
+        if (!data || data.length === 0) {
+            alert("Please add some skills first so AI can suggest enhancements.");
+            return;
+        }
+
+        setLoading(true);
+        setLoadingText("Analyzing skills...");
+        try {
+            const texts = ["Standardizing naming...", "Filtering terms...", "Optimizing list..."];
+            let textIdx = 0;
+            const interval = setInterval(() => {
+                setLoadingText(texts[textIdx % texts.length]);
+                textIdx++;
+            }, 1500);
+
+            const response = await api.post("/api/ai/enhance-section", {
+                section: 'skills',
+                userContent: data.join(', ')
+            });
+
+            clearInterval(interval);
+            if (response.data && response.data.enhancedContent) {
+                const enhancedSkills = response.data.enhancedContent
+                    .split(',')
+                    .map(s => s.trim())
+                    .filter(Boolean);
+                onChange(enhancedSkills);
+            }
+        } catch (error) {
+            console.error(error);
+            alert(error.response?.data?.message || error.message || "Failed to enhance skills");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="space-y-4">
-            <div>
-                <h3 className="text-lg font-semibold text-slate-900">Skills</h3>
-                <p className="text-sm text-slate-500">Add simple comma-ready skills that can be grouped in the resume.</p>
+            <div className="flex items-center justify-between gap-3">
+                <div>
+                    <h3 className="text-lg font-semibold text-slate-900">Skills</h3>
+                    <p className="text-sm text-slate-500">Add simple comma-ready skills that can be grouped in the resume.</p>
+                </div>
+
+                <button
+                    type="button"
+                    onClick={handleAiEnhance}
+                    disabled={loading}
+                    className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-100 disabled:opacity-50 cursor-pointer"
+                >
+                    {loading ? (
+                        <>
+                            <Loader2 className="size-4 animate-spin" />
+                            <span>{loadingText}</span>
+                        </>
+                    ) : (
+                        <>
+                            <Sparkles className="size-4" />
+                            <span>AI Enhance</span>
+                        </>
+                    )}
+                </button>
             </div>
 
             <div className="flex gap-2">

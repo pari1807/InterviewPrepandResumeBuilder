@@ -1,9 +1,17 @@
+// =====================================================
+// AI-CHANGE
+// Date: 2026-07-20
+// Reason: Integrate backend MongoDB resume data recovery (public/private) for previewing.
+// Changes: Imported api. Implemented async fetch in useEffect checking database endpoints before falling back to localStorage/dummy entries.
+// Connected Files: client/src/configs/api.js, server/controllers/resumeController.js
+// =====================================================
 import React, { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { dummyResumeData } from '../assets/assets'
 import ResumePreview from '../components/ResumePreview'
 import { DEFAULT_LAYOUT_SETTINGS } from '../components/templates/templateUtils'
 import { ArrowLeft, Printer } from 'lucide-react'
+import api from '../configs/api'
 
 const buildEmptyResume = (resumeId = '') => ({
   _id: resumeId,
@@ -45,27 +53,61 @@ const Preview = () => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const storageKey = `resume-builder:draft:${resumeId}`
-    const storedDraft = localStorage.getItem(storageKey)
-    
-    if (storedDraft) {
+    const fetchResume = async () => {
       try {
-        setResumeData(normalizeResumeData(JSON.parse(storedDraft)))
-        setLoading(false)
-        return
-      } catch {
-        localStorage.removeItem(storageKey)
-      }
-    }
+        setLoading(true);
+        // 1. Try to load from the authenticated route (works if user is owner)
+        try {
+          const { data } = await api.get(`/api/resumes/${resumeId}`);
+          if (data && data.resume) {
+            setResumeData(normalizeResumeData(data.resume));
+            setLoading(false);
+            return;
+          }
+        } catch (err) {
+          console.log("Could not load private resume, trying public endpoint...");
+        }
 
-    const resume = dummyResumeData.find((entry) => entry._id === resumeId)
-    if (resume) {
-      setResumeData(normalizeResumeData(resume))
-    } else {
-      // If none found, initialize empty
-      setResumeData(normalizeResumeData({ _id: resumeId }))
-    }
-    setLoading(false)
+        // 2. Try to load from the public route (no auth needed)
+        try {
+          const { data } = await api.get(`/api/resumes/public/${resumeId}`);
+          if (data && data.resume) {
+            setResumeData(normalizeResumeData(data.resume));
+            setLoading(false);
+            return;
+          }
+        } catch (err) {
+          console.log("Could not load public resume from backend.");
+        }
+      } catch (err) {
+        console.error("Backend fetch error:", err);
+      }
+
+      // 3. Fallback: local storage
+      const storageKey = `resume-builder:draft:${resumeId}`
+      const storedDraft = localStorage.getItem(storageKey)
+      
+      if (storedDraft) {
+        try {
+          setResumeData(normalizeResumeData(JSON.parse(storedDraft)))
+          setLoading(false)
+          return
+        } catch {
+          localStorage.removeItem(storageKey)
+        }
+      }
+
+      // 4. Fallback: dummy data
+      const resume = dummyResumeData.find((entry) => entry._id === resumeId)
+      if (resume) {
+        setResumeData(normalizeResumeData(resume))
+      } else {
+        setResumeData(normalizeResumeData({ _id: resumeId }))
+      }
+      setLoading(false)
+    };
+
+    fetchResume();
   }, [resumeId])
 
   if (loading) {
