@@ -33,7 +33,7 @@ const App = () => {
       console.error("Failed to fetch user data:", error);
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      dispatch(logout());
+      dispatch(logout()); 
       dispatch(setLoading(false));
     }
   }
