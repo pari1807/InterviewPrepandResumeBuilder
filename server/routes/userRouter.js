@@ -20,6 +20,7 @@ userRouter.post('/send-otp', sendOTP);
 userRouter.post('/register', registerUser);
 userRouter.post('/login', loginUser);
 userRouter.get('/data', protect, getUserById);
+user
 
 // Password Reset Routes
 userRouter.post('/forgot-password', forgotPassword);

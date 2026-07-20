@@ -3,9 +3,10 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import Otp from "../models/otp.js";
 import nodemailer from "nodemailer";
+import Resume from "../models/Resume.js";
 
-const generateToken = (userId)=>{
-    const token  =  jwt.sign({userId},process.env.JWT_SECRET, {expiresIn: '7d'});
+const generateToken = (userId) => {
+    const token = jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
     return token;
 }
@@ -127,36 +128,16 @@ const sendMailHelper = async (email, subject, otp, purpose) => {
     let transporter;
     const hasSmtp = process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS;
 
-    console.log(`[SMTP Debug] hasSmtp: ${!!hasSmtp}`);
-    console.log(`[SMTP Debug] SMTP_HOST: "${process.env.SMTP_HOST}"`);
-    console.log(`[SMTP Debug] SMTP_PORT: "${process.env.SMTP_PORT}"`);
-    console.log(`[SMTP Debug] SMTP_USER: "${process.env.SMTP_USER}"`);
-    console.log(`[SMTP Debug] SMTP_PASS length: ${process.env.SMTP_PASS ? process.env.SMTP_PASS.length : 0}`);
-
     if (hasSmtp) {
-        const isGmail = process.env.SMTP_HOST.includes("gmail");
-        if (isGmail) {
-            transporter = nodemailer.createTransport({
-                service: 'gmail',
-                auth: {
-                    user: process.env.SMTP_USER,
-                    pass: process.env.SMTP_PASS,
-                }
-            });
-        } else {
-            transporter = nodemailer.createTransport({
-                host: process.env.SMTP_HOST,
-                port: parseInt(process.env.SMTP_PORT || "587"),
-                secure: parseInt(process.env.SMTP_PORT || "587") === 465,
-                auth: {
-                    user: process.env.SMTP_USER,
-                    pass: process.env.SMTP_PASS,
-                },
-                tls: {
-                    rejectUnauthorized: false
-                }
-            });
-        }
+        transporter = nodemailer.createTransport({
+            host: process.env.SMTP_HOST,
+            port: parseInt(process.env.SMTP_PORT || "587"),
+            secure: process.env.SMTP_PORT === "465",
+            auth: {
+                user: process.env.SMTP_USER,
+                pass: process.env.SMTP_PASS,
+            },
+        });
     } else {
         // Dynamically create Ethereal account
         const testAccount = await nodemailer.createTestAccount();
@@ -180,8 +161,7 @@ const sendMailHelper = async (email, subject, otp, purpose) => {
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log(`[SMTP Debug] Mail sent status: Accepted=${JSON.stringify(info.accepted)}, Rejected=${JSON.stringify(info.rejected)}, MessageId=${info.messageId}`);
-    
+
     // Log preview URL if it's ethereal
     if (!hasSmtp) {
         const previewUrl = nodemailer.getTestMessageUrl(info);
@@ -226,13 +206,13 @@ export const sendOTP = async (req, res) => {
 
 //Controller for user registration
 //POST : /api/users/register
-export const registerUser = async(req,res) => {
-    try{
-        const {name, email, password, otp} = req.body;
+export const registerUser = async (req, res) => {
+    try {
+        const { name, email, password, otp } = req.body;
 
         //check if required fields are present
-        if(!name || !email || !password || !otp){
-            return res.status(400).json({message: 'Missing required fields'})
+        if (!name || !email || !password || !otp) {
+            return res.status(400).json({ message: 'Missing required fields' })
         }
 
         // Verify OTP
@@ -242,9 +222,9 @@ export const registerUser = async(req,res) => {
         }
 
         //check if user already exists
-        const user  = await User.findOne({email})
-        if(user){
-            return res.status(400).json({message : 'User already exists'})
+        const user = await User.findOne({ email })
+        if (user) {
+            return res.status(400).json({ message: 'User already exists' })
         }
 
         //create new user 
@@ -260,55 +240,55 @@ export const registerUser = async(req,res) => {
         const token = generateToken(newUser._id)
         newUser.password = undefined;
 
-        return res.status(201).json({message: 'User created successfully', token, user: newUser})
-    }catch(error){
-            return res.status(400).json({message: error.message})
+        return res.status(201).json({ message: 'User created successfully', token, user: newUser })
+    } catch (error) {
+        return res.status(400).json({ message: error.message })
     }
 }
 
 //controller for user login
 //POST : /api/users/login
-export const loginUser = async(req,res) => {
-    try{
-        const { email, password} = req.body;
+export const loginUser = async (req, res) => {
+    try {
+        const { email, password } = req.body;
 
         //check if user already exists
-        const user  = await User.findOne({email})
-        if(!user){
-            return res.status(400).json({message : 'Invalid Email or Password'})
+        const user = await User.findOne({ email })
+        if (!user) {
+            return res.status(400).json({ message: 'Invalid Email or Password' })
         }
 
         //check if password is correct
-        if(!user.comparePassword(password)){
-            return res.status(400).json({message: 'Invalid email or password'})
+        if (!user.comparePassword(password)) {
+            return res.status(400).json({ message: 'Invalid email or password' })
         }
 
         //return success message
         const token = generateToken(user._id)
         user.password = undefined;
 
-        return res.status(200).json({message: 'Login successful', token, user})
-    }catch(error){
-            return res.status(400).json({message: error.message})
+        return res.status(200).json({ message: 'Login successful', token, user })
+    } catch (error) {
+        return res.status(400).json({ message: error.message })
     }
 }
 
 //controller for getting user by id 
 // GET: /api/users/data
-export const getUserById =  async(req, res) => {
-    try{
+export const getUserById = async (req, res) => {
+    try {
         const userId = req.userId;
 
         //check if user exists
         const user = await User.findById(userId)
-        if(!user){
-            return res.status(404).json({message: 'User not found'})
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' })
         }
         //return user
         user.password = undefined;
-        return res.status(200).json({user})
-    }catch(error){
-        return res.status(400).json({message: error.message})
+        return res.status(200).json({ user })
+    } catch (error) {
+        return res.status(400).json({ message: error.message })
     }
 }
 
@@ -535,3 +515,53 @@ export const confirmPasswordChange = async (req, res) => {
         return res.status(500).json({ message: error.message });
     }
 };
+
+//controller for getting user resumes
+// GET: /api/users/resumes
+export const getUserResumes = async (req, res) => {
+    try {
+        const userId = req.userId;
+
+        //return user resume
+        const resumes = await Resume.find({ userId });
+        return res.status(200).json({ resumes })
+    } catch (error) {
+        return res.status(400).json({ message: 'error.message' })
+    }
+};
+
+//get resume by id public
+//GET: /api/resumes/public
+
+export const getPublicResumeById = async (req, res) => {
+    try {
+        const { resumeId } = req.params;
+        const resume = await Resume.findOne({ public: true, _id: resumeId });
+
+        if (!resume) {
+            return res.status(404).json({ message: "Resume not found" });
+        }
+    } catch (error) {
+        return res.status(400).json({ message: error.message });
+    }
+}
+
+//controller for updating a resume
+//PUT: /api/resumes/update
+
+export const updateResume = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { resumeId, resumeData, removeBackground } = req.body;
+
+        const image = req.file;
+
+        let resumeDataCopy = JSON.parse(resumeData);
+
+        const resume = await Resume.findByIdAndUpdate({ userId, _id: resumeId }, resumeDataCopy, { new: true });
+
+        return res.status(200).json({ message: 'Resume updated successfully', resume });
+    } catch (Error) {
+        return res.status(400).json({ message: 'error.message' });
+    }
+}
